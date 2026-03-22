@@ -37,5 +37,8 @@ out/
 .vscode/
 API_SPEC.md
 CLAUDE.md
+DB.md
+application.yml
+application-local.yml
 
 
