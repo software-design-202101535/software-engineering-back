@@ -36,6 +36,7 @@ public enum ErrorCode {
 
     // 학생
     STUDENT_NOT_FOUND(HttpStatus.NOT_FOUND, 404, "해당 학생을 찾을 수 없습니다."),
+    STUDENT_ACCESS_DENIED(HttpStatus.FORBIDDEN, 403, "학생 정보에 접근할 권한이 없습니다."),
 
     // 성적
     GRADE_NOT_FOUND(HttpStatus.NOT_FOUND, 404, "해당 성적을 찾을 수 없습니다."),

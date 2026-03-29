@@ -4,6 +4,7 @@ import com.example.EduManager.domain.student.entity.ParentStudent;
 import com.example.EduManager.domain.student.entity.StudentProfile;
 import com.example.EduManager.domain.student.repository.ParentStudentRepository;
 import com.example.EduManager.domain.student.repository.StudentProfileRepository;
+import com.example.EduManager.domain.user.entity.School;
 import com.example.EduManager.domain.user.entity.User;
 import com.example.EduManager.global.exception.CustomException;
 import com.example.EduManager.global.exception.ErrorCode;
@@ -38,6 +39,10 @@ public class StudentService {
         return parentStudentRepository.findAllByStudent(student).stream()
                 .map(ParentStudent::getParent)
                 .toList();
+    }
+
+    public List<StudentProfile> getClassStudents(int grade, int classNum, School school) {
+        return studentProfileRepository.findAllByGradeAndClassNumAndUserSchool(grade, classNum, school);
     }
 
     public void linkParent(User parent, StudentProfile student) {

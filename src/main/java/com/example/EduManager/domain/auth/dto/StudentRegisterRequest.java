@@ -34,4 +34,5 @@ public class StudentRegisterRequest {
 
     @Min(value = 1, message = "번호를 입력해주세요.")
     private int number;
+
 }

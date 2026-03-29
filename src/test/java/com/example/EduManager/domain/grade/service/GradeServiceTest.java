@@ -24,6 +24,8 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -77,16 +79,17 @@ class GradeServiceTest {
                     List.of(), List.of());
 
             when(gradeRepository.findAllById(List.of())).thenReturn(List.of());
-            when(gradeRepository.existsByStudentAndSemesterAndSubjectAndExamType(
-                    student, "2025-1", Subject.MATH, ExamType.MIDTERM)).thenReturn(false);
+            when(gradeRepository.findExistingSubjects(student, "2025-1", ExamType.MIDTERM, List.of(Subject.MATH)))
+                    .thenReturn(List.of());
             when(gradeRepository.findAllByStudentAndSemesterAndExamType(student, "2025-1", ExamType.MIDTERM))
                     .thenReturn(List.of(Grade.of(student, "2025-1", Subject.MATH, 90, ExamType.MIDTERM)));
 
             List<Grade> result = gradeService.batchProcess(student, request);
 
             assertAll(
-                    () -> verify(gradeRepository).save(any(Grade.class)),
+                    () -> verify(gradeRepository).saveAll(anyList()),
                     () -> assertEquals(1, result.size()),
+                    () -> assertEquals(Subject.MATH, result.get(0).getSubject()),
                     () -> assertEquals(90, result.get(0).getScore())
             );
         }
@@ -97,11 +100,13 @@ class GradeServiceTest {
             Grade existingGrade = Grade.of(student, "2025-1", Subject.MATH, 80, ExamType.MIDTERM);
             BatchGradeRequest request = BatchGradeRequest.of("2025-1", ExamType.MIDTERM,
                     List.of(),
-                    List.of(BatchGradeRequest.UpdateItem.of(1L, 90)),
+                    List.of(BatchGradeRequest.UpdateItem.of(1L, Subject.MATH, 90)),
                     List.of());
 
             when(gradeRepository.findAllById(List.of(1L))).thenReturn(List.of(existingGrade));
             when(gradeRepository.findAllById(List.of())).thenReturn(List.of());
+            when(gradeRepository.findConflictingSubjects(eq(student), eq("2025-1"), eq(ExamType.MIDTERM), eq(List.of(Subject.MATH)), any()))
+                    .thenReturn(List.of());
             when(gradeRepository.findAllByStudentAndSemesterAndExamType(student, "2025-1", ExamType.MIDTERM))
                     .thenReturn(List.of(existingGrade));
 
@@ -137,8 +142,8 @@ class GradeServiceTest {
 
             when(gradeRepository.findAllById(List.of())).thenReturn(List.of());
             when(gradeRepository.findAllById(List.of(1L))).thenReturn(List.of(gradeToDelete));
-            when(gradeRepository.existsByStudentAndSemesterAndSubjectAndExamType(
-                    student, "2025-1", Subject.MATH, ExamType.MIDTERM)).thenReturn(false);
+            when(gradeRepository.findExistingSubjects(student, "2025-1", ExamType.MIDTERM, List.of(Subject.MATH)))
+                    .thenReturn(List.of());
             when(gradeRepository.findAllByStudentAndSemesterAndExamType(student, "2025-1", ExamType.MIDTERM))
                     .thenReturn(List.of(Grade.of(student, "2025-1", Subject.MATH, 95, ExamType.MIDTERM)));
 
@@ -146,7 +151,7 @@ class GradeServiceTest {
 
             assertAll(
                     () -> verify(gradeRepository).deleteAll(List.of(gradeToDelete)),
-                    () -> verify(gradeRepository).save(any(Grade.class)),
+                    () -> verify(gradeRepository).saveAll(anyList()),
                     () -> assertEquals(95, result.get(0).getScore())
             );
         }
@@ -161,7 +166,7 @@ class GradeServiceTest {
         void failUpdateNotFound() {
             BatchGradeRequest request = BatchGradeRequest.of("2025-1", ExamType.MIDTERM,
                     List.of(),
-                    List.of(BatchGradeRequest.UpdateItem.of(999L, 90)),
+                    List.of(BatchGradeRequest.UpdateItem.of(999L, Subject.MATH, 90)),
                     List.of());
             when(gradeRepository.findAllById(List.of(999L))).thenReturn(List.of());
 
@@ -192,13 +197,36 @@ class GradeServiceTest {
                     List.of(BatchGradeRequest.CreateItem.of(Subject.MATH, 90)),
                     List.of(), List.of());
             when(gradeRepository.findAllById(List.of())).thenReturn(List.of());
-            when(gradeRepository.existsByStudentAndSemesterAndSubjectAndExamType(
-                    student, "2025-1", Subject.MATH, ExamType.MIDTERM)).thenReturn(true);
+            when(gradeRepository.findExistingSubjects(student, "2025-1", ExamType.MIDTERM, List.of(Subject.MATH)))
+                    .thenReturn(List.of(Subject.MATH));
 
             CustomException ex = assertThrows(CustomException.class,
                     () -> gradeService.batchProcess(student, request));
 
             assertEquals(ErrorCode.GRADE_ALREADY_EXISTS, ex.getErrorCode());
+        }
+
+        @Test
+        @DisplayName("TC-3-4. update 시 다른 성적과 과목 충돌 → GRADE_ALREADY_EXISTS")
+        void failUpdateSubjectConflict() {
+            Grade existingGrade = Grade.of(student, "2025-1", Subject.ENGLISH, 80, ExamType.MIDTERM);
+            BatchGradeRequest request = BatchGradeRequest.of("2025-1", ExamType.MIDTERM,
+                    List.of(),
+                    List.of(BatchGradeRequest.UpdateItem.of(1L, Subject.MATH, 90)),
+                    List.of());
+
+            when(gradeRepository.findAllById(List.of(1L))).thenReturn(List.of(existingGrade));
+            when(gradeRepository.findAllById(List.of())).thenReturn(List.of());
+            when(gradeRepository.findConflictingSubjects(eq(student), eq("2025-1"), eq(ExamType.MIDTERM), eq(List.of(Subject.MATH)), any()))
+                    .thenReturn(List.of(Subject.MATH));
+
+            CustomException ex = assertThrows(CustomException.class,
+                    () -> gradeService.batchProcess(student, request));
+
+            assertAll(
+                    () -> assertEquals(ErrorCode.GRADE_ALREADY_EXISTS, ex.getErrorCode()),
+                    () -> verify(gradeRepository, never()).saveAll(any())
+            );
         }
     }
 }
