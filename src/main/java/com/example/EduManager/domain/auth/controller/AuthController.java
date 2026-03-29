@@ -1,6 +1,6 @@
 package com.example.EduManager.domain.auth.controller;
 
-import com.example.EduManager.domain.auth.AuthFacade;
+import com.example.EduManager.facade.AuthFacade;
 import com.example.EduManager.domain.auth.dto.*;
 import com.example.EduManager.global.security.UserDetailsImpl;
 import com.example.EduManager.global.swagger.AuthApiSpecification;

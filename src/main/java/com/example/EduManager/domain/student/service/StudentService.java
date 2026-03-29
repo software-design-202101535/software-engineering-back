@@ -10,6 +10,8 @@ import com.example.EduManager.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class StudentService {
@@ -24,6 +26,18 @@ public class StudentService {
     public StudentProfile getProfileByUser(User user) {
         return studentProfileRepository.findByUser(user)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    public StudentProfile getById(Long studentId) {
+        return studentProfileRepository.findById(studentId)
+                .orElseThrow(() -> new CustomException(ErrorCode.STUDENT_NOT_FOUND));
+    }
+
+    public List<User> getParentsByStudentId(Long studentId) {
+        StudentProfile student = getById(studentId);
+        return parentStudentRepository.findAllByStudent(student).stream()
+                .map(ParentStudent::getParent)
+                .toList();
     }
 
     public void linkParent(User parent, StudentProfile student) {
