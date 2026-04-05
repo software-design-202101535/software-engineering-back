@@ -78,8 +78,8 @@ class StudentNoteOperationFacadeTest {
     class GetList {
 
         @Test
-        @DisplayName("TC-1-1. category null → findByStudentAndCategory(studentId, null) 호출")
-        void nullCategory() {
+        @DisplayName("TC-1-1. ADMIN")
+        void admin() {
             UserDetailsImpl admin = UserDetailsImpl.create(1L, Role.ADMIN);
             when(studentService.getById(2L)).thenReturn(student);
             when(studentNoteService.findByStudentAndCategory(2L, null)).thenReturn(List.of());
@@ -90,15 +90,17 @@ class StudentNoteOperationFacadeTest {
         }
 
         @Test
-        @DisplayName("TC-1-2. category = ACHIEVEMENT → findByStudentAndCategory(studentId, ACHIEVEMENT) 호출")
-        void withCategory() {
-            UserDetailsImpl admin = UserDetailsImpl.create(1L, Role.ADMIN);
+        @DisplayName("TC-1-2. 담임 TEACHER")
+        void homeroomTeacher() {
+            UserDetailsImpl teacher = UserDetailsImpl.create(10L, Role.TEACHER);
             when(studentService.getById(2L)).thenReturn(student);
-            when(studentNoteService.findByStudentAndCategory(2L, NoteCategory.ACHIEVEMENT)).thenReturn(List.of());
+            stubStudent();
+            stubHomeroomTeacher(10L);
+            when(studentNoteService.findByStudentAndCategory(2L, null)).thenReturn(List.of());
 
-            facade.getList(2L, NoteCategory.ACHIEVEMENT, admin);
+            facade.getList(2L, null, teacher);
 
-            verify(studentNoteService).findByStudentAndCategory(2L, NoteCategory.ACHIEVEMENT);
+            verify(studentNoteService).findByStudentAndCategory(2L, null);
         }
 
         @Test
