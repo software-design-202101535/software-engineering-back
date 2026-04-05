@@ -1,5 +1,6 @@
 package com.example.EduManager.domain.student.service;
 
+import com.example.EduManager.domain.student.dto.UpdateStudentRequest;
 import com.example.EduManager.domain.student.entity.ParentStudent;
 import com.example.EduManager.domain.student.entity.StudentProfile;
 import com.example.EduManager.domain.student.repository.ParentStudentRepository;
@@ -47,5 +48,10 @@ public class StudentService {
 
     public void linkParent(User parent, StudentProfile student) {
         parentStudentRepository.save(ParentStudent.of(parent, student));
+    }
+
+    public void updateDetail(StudentProfile student, UpdateStudentRequest request) {
+        student.updateDetail(request.getBirthDate(), request.getPhone(),
+                request.getParentPhone(), request.getAddress());
     }
 }

@@ -50,4 +50,8 @@ public class UserService {
         return userRepository.findBySchoolAndSchoolNumber(school, schoolNumber)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
+
+    public void updateName(User user, String name) {
+        user.updateName(name);
+    }
 }
