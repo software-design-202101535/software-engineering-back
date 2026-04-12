@@ -21,18 +21,27 @@ public class FeedbackService {
 
     private final FeedbackRepository feedbackRepository;
 
-    public List<Feedback> findAll(Long studentId, FeedbackCategory category) {
-        if (category == null) return feedbackRepository.findAllByStudentId(studentId);
+    public List<Feedback> findAll(Long studentId) {
+        return feedbackRepository.findAllByStudentId(studentId);
+    }
+
+    public List<Feedback> findAllByCategory(Long studentId, FeedbackCategory category) {
         return feedbackRepository.findAllByStudentIdAndCategory(studentId, category);
     }
 
-    public List<Feedback> findStudentVisible(Long studentId, FeedbackCategory category) {
-        if (category == null) return feedbackRepository.findAllByStudentIdAndStudentVisibleTrue(studentId);
+    public List<Feedback> findStudentVisible(Long studentId) {
+        return feedbackRepository.findAllByStudentIdAndStudentVisibleTrue(studentId);
+    }
+
+    public List<Feedback> findStudentVisibleByCategory(Long studentId, FeedbackCategory category) {
         return feedbackRepository.findAllByStudentIdAndStudentVisibleTrueAndCategory(studentId, category);
     }
 
-    public List<Feedback> findParentVisible(Long studentId, FeedbackCategory category) {
-        if (category == null) return feedbackRepository.findAllByStudentIdAndParentVisibleTrue(studentId);
+    public List<Feedback> findParentVisible(Long studentId) {
+        return feedbackRepository.findAllByStudentIdAndParentVisibleTrue(studentId);
+    }
+
+    public List<Feedback> findParentVisibleByCategory(Long studentId, FeedbackCategory category) {
         return feedbackRepository.findAllByStudentIdAndParentVisibleTrueAndCategory(studentId, category);
     }
 

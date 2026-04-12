@@ -33,15 +33,9 @@ public class FeedbackOperationFacade {
     public List<FeedbackResponse> getList(Long studentId, FeedbackCategory category, UserDetailsImpl userDetails) {
         studentService.getById(studentId);
         List<Feedback> feedbacks = switch (userDetails.getRole()) {
-            case TEACHER, ADMIN -> feedbackService.findAll(studentId, category);
-            case STUDENT -> {
-                verifyStudentSelf(userDetails.getUserId(), studentId);
-                yield feedbackService.findStudentVisible(studentId, category);
-            }
-            case PARENT -> {
-                verifyParentChild(userDetails.getUserId(), studentId);
-                yield feedbackService.findParentVisible(studentId, category);
-            }
+            case TEACHER, ADMIN -> fetchAllFeedbacks(studentId, category);
+            case STUDENT -> fetchStudentFeedbacks(userDetails.getUserId(), studentId, category);
+            case PARENT -> fetchParentFeedbacks(userDetails.getUserId(), studentId, category);
         };
         return feedbacks.stream().map(FeedbackResponse::of).toList();
     }
@@ -79,6 +73,26 @@ public class FeedbackOperationFacade {
         Feedback feedback = feedbackService.getByIdAndStudentId(feedbackId, studentId);
         checkAuthor(feedback, userDetails);
         feedbackService.delete(feedback);
+    }
+
+    private List<Feedback> fetchAllFeedbacks(Long studentId, FeedbackCategory category) {
+        return category == null
+                ? feedbackService.findAll(studentId)
+                : feedbackService.findAllByCategory(studentId, category);
+    }
+
+    private List<Feedback> fetchStudentFeedbacks(Long userId, Long studentId, FeedbackCategory category) {
+        verifyStudentSelf(userId, studentId);
+        return category == null
+                ? feedbackService.findStudentVisible(studentId)
+                : feedbackService.findStudentVisibleByCategory(studentId, category);
+    }
+
+    private List<Feedback> fetchParentFeedbacks(Long userId, Long studentId, FeedbackCategory category) {
+        verifyParentChild(userId, studentId);
+        return category == null
+                ? feedbackService.findParentVisible(studentId)
+                : feedbackService.findParentVisibleByCategory(studentId, category);
     }
 
     private void verifyStudentSelf(Long userId, Long studentId) {
