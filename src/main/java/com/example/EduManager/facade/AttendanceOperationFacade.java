@@ -1,8 +1,10 @@
 package com.example.EduManager.facade;
 
-import com.example.EduManager.domain.student.dto.StudentDetailResponse;
-import com.example.EduManager.domain.student.dto.StudentSummaryResponse;
-import com.example.EduManager.domain.student.dto.UpdateStudentRequest;
+import com.example.EduManager.domain.attendance.dto.AttendanceResponse;
+import com.example.EduManager.domain.attendance.dto.CreateAttendanceRequest;
+import com.example.EduManager.domain.attendance.dto.UpdateAttendanceRequest;
+import com.example.EduManager.domain.attendance.entity.Attendance;
+import com.example.EduManager.domain.attendance.service.AttendanceService;
 import com.example.EduManager.domain.student.entity.StudentProfile;
 import com.example.EduManager.domain.student.service.StudentService;
 import com.example.EduManager.domain.teacher.entity.TeacherProfile;
@@ -20,36 +22,46 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class StudentOperationFacade {
+public class AttendanceOperationFacade {
 
+    private final AttendanceService attendanceService;
     private final StudentService studentService;
     private final TeacherService teacherService;
     private final UserService userService;
 
     @Transactional(readOnly = true)
-    public List<StudentSummaryResponse> getClassStudents(UserDetailsImpl userDetails) {
-        if (userDetails.getRole() != Role.TEACHER) {
-            throw new CustomException(ErrorCode.STUDENT_ACCESS_DENIED);
-        }
-        TeacherProfile teacher = teacherService.getProfileByUserId(userDetails.getUserId());
-        return toSummaryResponses(studentService.getClassStudents(teacher.getGrade(), teacher.getClassNum(), teacher.getUser().getSchool()));
-    }
-
-    @Transactional(readOnly = true)
-    public StudentDetailResponse getStudentDetail(Long studentId, UserDetailsImpl userDetails) {
+    public List<AttendanceResponse> getList(Long studentId, int year, int month, UserDetailsImpl userDetails) {
         StudentProfile student = studentService.getById(studentId);
         checkHomeroomAccess(userDetails.getUserId(), student, userDetails.getRole());
-        return StudentDetailResponse.of(student);
+        return attendanceService.findByStudentAndMonth(studentId, year, month).stream()
+                .map(AttendanceResponse::of)
+                .toList();
     }
 
     @Transactional
-    public StudentDetailResponse updateStudentDetail(Long studentId, UpdateStudentRequest request,
-                                                     UserDetailsImpl userDetails) {
+    public AttendanceResponse create(Long studentId, CreateAttendanceRequest request, UserDetailsImpl userDetails) {
         StudentProfile student = studentService.getById(studentId);
         checkHomeroomAccess(userDetails.getUserId(), student, userDetails.getRole());
-        userService.updateName(student.getUser(), request.getName());
-        studentService.updateDetail(student, request);
-        return StudentDetailResponse.of(student);
+        return AttendanceResponse.of(
+                attendanceService.save(student, request, userService.getById(userDetails.getUserId()))
+        );
+    }
+
+    @Transactional
+    public AttendanceResponse update(Long studentId, Long attendanceId,
+                                     UpdateAttendanceRequest request, UserDetailsImpl userDetails) {
+        StudentProfile student = studentService.getById(studentId);
+        checkHomeroomAccess(userDetails.getUserId(), student, userDetails.getRole());
+        Attendance attendance = attendanceService.getByIdAndStudentId(attendanceId, student.getId());
+        return AttendanceResponse.of(attendanceService.update(attendance, request));
+    }
+
+    @Transactional
+    public void delete(Long studentId, Long attendanceId, UserDetailsImpl userDetails) {
+        StudentProfile student = studentService.getById(studentId);
+        checkHomeroomAccess(userDetails.getUserId(), student, userDetails.getRole());
+        Attendance attendance = attendanceService.getByIdAndStudentId(attendanceId, student.getId());
+        attendanceService.delete(attendance);
     }
 
     private void checkHomeroomAccess(Long teacherUserId, StudentProfile student, Role role) {
@@ -62,9 +74,5 @@ public class StudentOperationFacade {
                 && teacher.getUser().getSchool() == student.getUser().getSchool();
 
         if (!isHomeroom) throw new CustomException(ErrorCode.STUDENT_ACCESS_DENIED);
-    }
-
-    private List<StudentSummaryResponse> toSummaryResponses(List<StudentProfile> students) {
-        return students.stream().map(StudentSummaryResponse::of).toList();
     }
 }

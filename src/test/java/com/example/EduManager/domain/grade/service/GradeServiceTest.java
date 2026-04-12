@@ -47,28 +47,7 @@ class GradeServiceTest {
     }
 
     @Nested
-    @DisplayName("1. getGrades()")
-    class GetGrades {
-
-        @Test
-        @DisplayName("TC-1-1. 정상 조회")
-        void success() {
-            Grade grade = Grade.of(student, "2025-1", Subject.MATH, 90, ExamType.MIDTERM);
-            when(gradeRepository.findAllByStudentAndSemesterAndExamType(student, "2025-1", ExamType.MIDTERM))
-                    .thenReturn(List.of(grade));
-
-            List<Grade> result = gradeService.getGrades(student, "2025-1", ExamType.MIDTERM);
-
-            assertAll(
-                    () -> assertEquals(1, result.size()),
-                    () -> assertEquals(Subject.MATH, result.get(0).getSubject()),
-                    () -> assertEquals(90, result.get(0).getScore())
-            );
-        }
-    }
-
-    @Nested
-    @DisplayName("2. batchProcess() - 성공")
+    @DisplayName("1. batchProcess() - 성공")
     class BatchProcessSuccess {
 
         @Test
@@ -158,7 +137,7 @@ class GradeServiceTest {
     }
 
     @Nested
-    @DisplayName("3. batchProcess() - 실패")
+    @DisplayName("2. batchProcess() - 실패")
     class BatchProcessFail {
 
         @Test

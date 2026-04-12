@@ -9,6 +9,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -26,8 +27,15 @@ public class StudentNote {
     @JoinColumn(name = "student_id", nullable = false)
     private StudentProfile student;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private NoteCategory category;
+
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
+
+    @Column(nullable = false)
+    private LocalDate date;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "teacher_id", nullable = false)
@@ -41,15 +49,20 @@ public class StudentNote {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    public static StudentNote of(StudentProfile student, String content, User teacher) {
+    public static StudentNote of(StudentProfile student, NoteCategory category,
+                                 String content, LocalDate date, User teacher) {
         StudentNote note = new StudentNote();
         note.student = student;
+        note.category = category;
         note.content = content;
+        note.date = date;
         note.teacher = teacher;
         return note;
     }
 
-    public void update(String content) {
+    public void update(NoteCategory category, String content, LocalDate date) {
+        this.category = category;
         this.content = content;
+        this.date = date;
     }
 }

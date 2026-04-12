@@ -72,6 +72,10 @@ public class User {
         return user;
     }
 
+    public void updateName(String name) {
+        this.name = name;
+    }
+
     public void updatePassword(String encodedPassword) {
         this.password = encodedPassword;
     }

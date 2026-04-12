@@ -56,7 +56,8 @@ public class Attendance {
         return attendance;
     }
 
-    public void update(AttendanceStatus status, String note) {
+    public void update(LocalDate date, AttendanceStatus status, String note) {
+        this.date = date;
         this.status = status;
         this.note = note;
     }
