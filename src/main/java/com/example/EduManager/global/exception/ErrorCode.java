@@ -48,6 +48,10 @@ public enum ErrorCode {
     FEEDBACK_NOT_FOUND(HttpStatus.NOT_FOUND, 404, "해당 피드백을 찾을 수 없습니다."),
     FEEDBACK_ACCESS_DENIED(HttpStatus.FORBIDDEN, 403, "해당 피드백에 접근할 권한이 없습니다."),
 
+    // 상담
+    COUNSELING_NOT_FOUND(HttpStatus.NOT_FOUND, 404, "해당 상담 기록을 찾을 수 없습니다."),
+    COUNSELING_ACCESS_DENIED(HttpStatus.FORBIDDEN, 403, "해당 상담 기록에 접근할 권한이 없습니다."),
+
     // 성적
     GRADE_NOT_FOUND(HttpStatus.NOT_FOUND, 404, "해당 성적을 찾을 수 없습니다."),
     GRADE_ALREADY_EXISTS(HttpStatus.CONFLICT, 409, "이미 등록된 성적입니다."),
