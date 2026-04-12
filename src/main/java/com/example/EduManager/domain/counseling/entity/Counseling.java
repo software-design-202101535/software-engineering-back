@@ -54,7 +54,8 @@ public class Counseling {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    public static Counseling of(StudentProfile student, User teacher, LocalDate date, String content, String nextPlan, LocalDate nextDate) {
+    public static Counseling of(StudentProfile student, User teacher, LocalDate date, String content,
+                                String nextPlan, LocalDate nextDate, boolean sharedWithTeachers) {
         Counseling counseling = new Counseling();
         counseling.student = student;
         counseling.teacher = teacher;
@@ -62,7 +63,7 @@ public class Counseling {
         counseling.content = content;
         counseling.nextPlan = nextPlan;
         counseling.nextDate = nextDate;
-        counseling.isSharedWithTeachers = false;
+        counseling.isSharedWithTeachers = sharedWithTeachers;
         return counseling;
     }
 
@@ -72,7 +73,7 @@ public class Counseling {
         this.nextDate = nextDate;
     }
 
-    public void shareWithTeachers() {
-        this.isSharedWithTeachers = true;
+    public void updateSharedStatus(boolean shared) {
+        this.isSharedWithTeachers = shared;
     }
 }
