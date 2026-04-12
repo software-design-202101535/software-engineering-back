@@ -44,6 +44,10 @@ public enum ErrorCode {
     // 특기사항
     NOTE_NOT_FOUND(HttpStatus.NOT_FOUND, 404, "해당 특기사항을 찾을 수 없습니다."),
 
+    // 피드백
+    FEEDBACK_NOT_FOUND(HttpStatus.NOT_FOUND, 404, "해당 피드백을 찾을 수 없습니다."),
+    FEEDBACK_ACCESS_DENIED(HttpStatus.FORBIDDEN, 403, "해당 피드백에 접근할 권한이 없습니다."),
+
     // 성적
     GRADE_NOT_FOUND(HttpStatus.NOT_FOUND, 404, "해당 성적을 찾을 수 없습니다."),
     GRADE_ALREADY_EXISTS(HttpStatus.CONFLICT, 409, "이미 등록된 성적입니다."),
