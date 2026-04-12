@@ -1,7 +1,6 @@
 package com.example.EduManager.domain.grade.entity;
 
 import com.example.EduManager.domain.student.entity.StudentProfile;
-import com.example.EduManager.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -35,20 +34,16 @@ public class Grade {
     @Column(nullable = false, length = 30)
     private Subject subject;
 
-    @Column(nullable = false)
-    private int score;
+    @Column
+    private Integer score;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 1)
+    @Column(length = 1)
     private GradeLevel grade;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "exam_type", nullable = false, length = 10)
     private ExamType examType;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "teacher_id", nullable = false)
-    private User teacher;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
@@ -59,20 +54,20 @@ public class Grade {
     private LocalDateTime updatedAt;
 
     public static Grade of(StudentProfile student, String semester, Subject subject,
-                           int score, ExamType examType, User teacher) {
+                           Integer score, ExamType examType) {
         Grade grade = new Grade();
         grade.student = student;
         grade.semester = semester;
         grade.subject = subject;
         grade.score = score;
-        grade.grade = GradeLevel.from(score);
+        grade.grade = score != null ? GradeLevel.from(score) : null;
         grade.examType = examType;
-        grade.teacher = teacher;
         return grade;
     }
 
-    public void updateScore(int score) {
+    public void update(Subject subject, Integer score) {
+        this.subject = subject;
         this.score = score;
-        this.grade = GradeLevel.from(score);
+        this.grade = score != null ? GradeLevel.from(score) : null;
     }
 }

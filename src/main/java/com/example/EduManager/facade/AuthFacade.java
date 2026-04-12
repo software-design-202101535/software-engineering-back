@@ -1,4 +1,4 @@
-package com.example.EduManager.domain.auth;
+package com.example.EduManager.facade;
 
 import com.example.EduManager.domain.auth.dto.*;
 import com.example.EduManager.domain.auth.service.AuthService;
