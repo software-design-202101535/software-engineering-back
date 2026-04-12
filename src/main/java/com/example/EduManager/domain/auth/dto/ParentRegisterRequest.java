@@ -1,6 +1,7 @@
 package com.example.EduManager.domain.auth.dto;
 
 import com.example.EduManager.domain.user.entity.School;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -24,4 +25,10 @@ public class ParentRegisterRequest {
 
     @NotBlank(message = "자녀의 학번을 입력해주세요.")
     private String childSchoolNumber;
+
+    @AssertTrue(message = "이용약관에 동의해주세요.")
+    private boolean termsAgreed;
+
+    @AssertTrue(message = "개인정보처리방침에 동의해주세요.")
+    private boolean privacyAgreed;
 }
