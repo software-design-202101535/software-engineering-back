@@ -32,7 +32,7 @@ public class Counseling {
     @JoinColumn(name = "teacher_id", nullable = false)
     private User teacher;
 
-    @Column(nullable = false)
+    @Column(name = "counseling_date", nullable = false)
     private LocalDate date;
 
     @Column(nullable = false, columnDefinition = "TEXT")

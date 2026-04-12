@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "attendance",
-        uniqueConstraints = @UniqueConstraint(name = "uq_attendance_student_date", columnNames = {"student_id", "date"}))
+        uniqueConstraints = @UniqueConstraint(name = "uq_attendance_student_date", columnNames = {"student_id", "attendance_date"}))
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -28,7 +28,7 @@ public class Attendance {
     @JoinColumn(name = "student_id", nullable = false)
     private StudentProfile student;
 
-    @Column(nullable = false)
+    @Column(name = "attendance_date", nullable = false)
     private LocalDate date;
 
     @Enumerated(EnumType.STRING)
