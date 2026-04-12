@@ -10,6 +10,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -35,11 +36,17 @@ public class Feedback {
     @Column(nullable = false, length = 20)
     private FeedbackCategory category;
 
+    @Column(name = "feedback_date", nullable = false)
+    private LocalDate date;
+
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
     @Column(nullable = false)
-    private boolean isShared;
+    private boolean studentVisible;
+
+    @Column(nullable = false)
+    private boolean parentVisible;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
@@ -49,22 +56,31 @@ public class Feedback {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    public static Feedback of(StudentProfile student, User teacher, FeedbackCategory category, String content) {
+    public static Feedback of(StudentProfile student, User teacher,
+                              FeedbackCategory category, LocalDate date, String content,
+                              boolean studentVisible, boolean parentVisible) {
         Feedback feedback = new Feedback();
         feedback.student = student;
         feedback.teacher = teacher;
         feedback.category = category;
+        feedback.date = date;
         feedback.content = content;
-        feedback.isShared = false;
+        feedback.studentVisible = studentVisible;
+        feedback.parentVisible = parentVisible;
         return feedback;
     }
 
-    public void update(FeedbackCategory category, String content) {
+    public void update(FeedbackCategory category, LocalDate date, String content,
+                       boolean studentVisible, boolean parentVisible) {
         this.category = category;
+        this.date = date;
         this.content = content;
+        this.studentVisible = studentVisible;
+        this.parentVisible = parentVisible;
     }
 
-    public void share() {
-        this.isShared = true;
+    public void updateVisibility(boolean studentVisible, boolean parentVisible) {
+        this.studentVisible = studentVisible;
+        this.parentVisible = parentVisible;
     }
 }
