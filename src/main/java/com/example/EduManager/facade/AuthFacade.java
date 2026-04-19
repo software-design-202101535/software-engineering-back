@@ -51,15 +51,26 @@ public class AuthFacade {
     }
 
     @Transactional
-    public LoginResult loginBySchool(SchoolLoginRequest request) {
+    public LoginResponse loginBySchool(SchoolLoginRequest request) {
         User user = userService.getBySchoolAndSchoolNumber(request.getSchool(), request.getSchoolNumber());
-        return authService.authenticate(user, request.getPassword());
+        return buildLoginResponse(user, request.getPassword());
     }
 
     @Transactional
-    public LoginResult loginByEmail(EmailLoginRequest request) {
+    public LoginResponse loginByEmail(EmailLoginRequest request) {
         User user = userService.getByEmail(request.getEmail());
-        return authService.authenticate(user, request.getPassword());
+        return buildLoginResponse(user, request.getPassword());
+    }
+
+    private LoginResponse buildLoginResponse(User user, String rawPassword) {
+        AuthTokens tokens = authService.authenticate(user, rawPassword);
+        return switch (user.getRole()) {
+            case STUDENT -> LoginResponse.ofStudent(user, tokens,
+                    studentService.getProfileByUser(user).getId());
+            case PARENT -> LoginResponse.ofParent(user, tokens,
+                    studentService.getProfilesByParent(user).stream().map(ChildSummary::of).toList());
+            default -> LoginResponse.ofTeacher(user, tokens);
+        };
     }
 
     @Transactional

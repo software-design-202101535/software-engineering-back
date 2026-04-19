@@ -39,17 +39,17 @@ public class AuthController implements AuthApiSpecification {
     @PostMapping("/login/school")
     public ResponseEntity<LoginResponse> loginBySchool(@Valid @RequestBody SchoolLoginRequest request,
                                                         HttpServletResponse response) {
-        LoginResult result = authFacade.loginBySchool(request);
-        setRefreshTokenCookie(response, result.getRefreshToken());
-        return ResponseEntity.ok(LoginResponse.of(result.getUser(), result.getAccessToken()));
+        LoginResponse loginResponse = authFacade.loginBySchool(request);
+        setRefreshTokenCookie(response, loginResponse.getRefreshToken());
+        return ResponseEntity.ok(loginResponse);
     }
 
     @PostMapping("/login/email")
     public ResponseEntity<LoginResponse> loginByEmail(@Valid @RequestBody EmailLoginRequest request,
                                                        HttpServletResponse response) {
-        LoginResult result = authFacade.loginByEmail(request);
-        setRefreshTokenCookie(response, result.getRefreshToken());
-        return ResponseEntity.ok(LoginResponse.of(result.getUser(), result.getAccessToken()));
+        LoginResponse loginResponse = authFacade.loginByEmail(request);
+        setRefreshTokenCookie(response, loginResponse.getRefreshToken());
+        return ResponseEntity.ok(loginResponse);
     }
 
     @PostMapping("/refresh")

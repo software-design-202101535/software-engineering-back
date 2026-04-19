@@ -182,23 +182,37 @@ public interface AuthApiSpecification {
     ResponseEntity<UserResponse> registerParent(@Valid @RequestBody ParentRegisterRequest request);
 
     @SecurityRequirements(value = {})
-    @Operation(summary = "교사·학생 로그인", description = "학교 + 사번/학번으로 로그인합니다. Refresh Token은 HttpOnly 쿠키(refreshToken)로 발급됩니다.")
+    @Operation(summary = "교사·학생 로그인", description = "학교 + 사번/학번으로 로그인합니다. Refresh Token은 HttpOnly 쿠키(refreshToken)로 발급됩니다. 학생 로그인 시 studentId가 포함됩니다.")
     @ApiResponses({
             @ApiResponse(
-                    responseCode = "200", description = "로그인 성공",
+                    responseCode = "200", description = "로그인 성공 (교사: studentId 없음 / 학생: studentId 포함)",
                     content = @Content(
                             schema = @Schema(implementation = LoginResponse.class),
-                            examples = @ExampleObject("""
-                                    {
-                                        "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
-                                        "user": {
-                                            "id": 1,
-                                            "email": "teacher@school.com",
-                                            "name": "김교사",
-                                            "role": "TEACHER"
-                                        }
-                                    }
-                                    """)
+                            examples = {
+                                    @ExampleObject(name = "교사 로그인", value = """
+                                            {
+                                                "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
+                                                "user": {
+                                                    "id": 1,
+                                                    "email": "teacher@school.com",
+                                                    "name": "김교사",
+                                                    "role": "TEACHER"
+                                                }
+                                            }
+                                            """),
+                                    @ExampleObject(name = "학생 로그인", value = """
+                                            {
+                                                "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
+                                                "user": {
+                                                    "id": 3,
+                                                    "email": "student@school.com",
+                                                    "name": "이학생",
+                                                    "role": "STUDENT"
+                                                },
+                                                "studentId": 5
+                                            }
+                                            """)
+                            }
                     )
             ),
             @ApiResponse(
@@ -232,7 +246,7 @@ public interface AuthApiSpecification {
                                                 HttpServletResponse response);
 
     @SecurityRequirements(value = {})
-    @Operation(summary = "학부모 로그인", description = "이메일로 로그인합니다. Refresh Token은 HttpOnly 쿠키(refreshToken)로 발급됩니다.")
+    @Operation(summary = "학부모 로그인", description = "이메일로 로그인합니다. Refresh Token은 HttpOnly 쿠키(refreshToken)로 발급됩니다. 연결된 자녀 목록(studentId, 이름)이 포함됩니다.")
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200", description = "로그인 성공",
@@ -246,7 +260,11 @@ public interface AuthApiSpecification {
                                             "email": "parent@email.com",
                                             "name": "박학부모",
                                             "role": "PARENT"
-                                        }
+                                        },
+                                        "children": [
+                                            { "studentId": 5, "name": "박자녀" },
+                                            { "studentId": 7, "name": "박둘째" }
+                                        ]
                                     }
                                     """)
                     )

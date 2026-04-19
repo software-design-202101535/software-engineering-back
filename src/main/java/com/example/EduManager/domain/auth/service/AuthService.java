@@ -1,6 +1,6 @@
 package com.example.EduManager.domain.auth.service;
 
-import com.example.EduManager.domain.auth.dto.LoginResult;
+import com.example.EduManager.domain.auth.dto.AuthTokens;
 import com.example.EduManager.domain.auth.dto.RefreshResult;
 import com.example.EduManager.domain.user.entity.RefreshToken;
 import com.example.EduManager.domain.user.entity.User;
@@ -23,7 +23,7 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
 
-    public LoginResult authenticate(User user, String rawPassword) {
+    public AuthTokens authenticate(User user, String rawPassword) {
         if (user.isDeleted()) {
             throw new CustomException(ErrorCode.USER_DELETED);
         }
@@ -55,12 +55,12 @@ public class AuthService {
         deleteRefreshToken(user);
     }
 
-    private LoginResult issueTokens(User user) {
+    private AuthTokens issueTokens(User user) {
         deleteRefreshToken(user);
         String accessToken = jwtTokenProvider.createAccessToken(user.getId());
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
         saveRefreshToken(user, refreshToken);
-        return LoginResult.of(user, accessToken, refreshToken);
+        return AuthTokens.of(accessToken, refreshToken);
     }
 
     private void saveRefreshToken(User user, String token) {

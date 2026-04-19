@@ -42,6 +42,12 @@ public class StudentService {
                 .toList();
     }
 
+    public List<StudentProfile> getProfilesByParent(User parent) {
+        return parentStudentRepository.findAllByParent(parent).stream()
+                .map(ParentStudent::getStudent)
+                .toList();
+    }
+
     public List<StudentProfile> getClassStudents(int grade, int classNum, School school) {
         return studentProfileRepository.findAllByGradeAndClassNumAndUserSchool(grade, classNum, school);
     }
