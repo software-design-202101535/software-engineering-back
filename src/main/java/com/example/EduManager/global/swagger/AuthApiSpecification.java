@@ -39,19 +39,30 @@ public interface AuthApiSpecification {
                     )
             ),
             @ApiResponse(
-                    responseCode = "400", description = "입력값 오류",
+                    responseCode = "400", description = "입력값 오류 / 비밀번호 불일치 / 약관 미동의",
                     content = @Content(
                             schema = @Schema(implementation = ErrorResponse.class),
-                            examples = @ExampleObject("""
-                                    {
-                                        "code": 400,
-                                        "name": "INVALID_INPUT_VALUE",
-                                        "message": "잘못된 입력입니다.",
-                                        "errors": {
-                                            "grade": "학년을 입력해주세요."
-                                        }
-                                    }
-                                    """)
+                            examples = {
+                                    @ExampleObject(name = "입력값 오류", value = """
+                                            {
+                                                "code": 400,
+                                                "name": "INVALID_INPUT_VALUE",
+                                                "message": "잘못된 입력입니다.",
+                                                "errors": {
+                                                    "grade": "학년을 입력해주세요.",
+                                                    "termsAgreed": "이용약관에 동의해주세요.",
+                                                    "privacyAgreed": "개인정보처리방침에 동의해주세요."
+                                                }
+                                            }
+                                            """),
+                                    @ExampleObject(name = "비밀번호 불일치", value = """
+                                            {
+                                                "code": 400,
+                                                "name": "PASSWORD_MISMATCH",
+                                                "message": "비밀번호가 일치하지 않습니다."
+                                            }
+                                            """)
+                            }
                     )
             ),
             @ApiResponse(
@@ -88,19 +99,30 @@ public interface AuthApiSpecification {
                     )
             ),
             @ApiResponse(
-                    responseCode = "400", description = "입력값 오류",
+                    responseCode = "400", description = "입력값 오류 / 비밀번호 불일치 / 약관 미동의",
                     content = @Content(
                             schema = @Schema(implementation = ErrorResponse.class),
-                            examples = @ExampleObject("""
-                                    {
-                                        "code": 400,
-                                        "name": "INVALID_INPUT_VALUE",
-                                        "message": "잘못된 입력입니다.",
-                                        "errors": {
-                                            "number": "번호를 입력해주세요."
-                                        }
-                                    }
-                                    """)
+                            examples = {
+                                    @ExampleObject(name = "입력값 오류", value = """
+                                            {
+                                                "code": 400,
+                                                "name": "INVALID_INPUT_VALUE",
+                                                "message": "잘못된 입력입니다.",
+                                                "errors": {
+                                                    "number": "번호를 입력해주세요.",
+                                                    "termsAgreed": "이용약관에 동의해주세요.",
+                                                    "privacyAgreed": "개인정보처리방침에 동의해주세요."
+                                                }
+                                            }
+                                            """),
+                                    @ExampleObject(name = "비밀번호 불일치", value = """
+                                            {
+                                                "code": 400,
+                                                "name": "PASSWORD_MISMATCH",
+                                                "message": "비밀번호가 일치하지 않습니다."
+                                            }
+                                            """)
+                            }
                     )
             ),
             @ApiResponse(
@@ -137,19 +159,30 @@ public interface AuthApiSpecification {
                     )
             ),
             @ApiResponse(
-                    responseCode = "400", description = "입력값 오류",
+                    responseCode = "400", description = "입력값 오류 / 비밀번호 불일치 / 약관 미동의",
                     content = @Content(
                             schema = @Schema(implementation = ErrorResponse.class),
-                            examples = @ExampleObject("""
-                                    {
-                                        "code": 400,
-                                        "name": "INVALID_INPUT_VALUE",
-                                        "message": "잘못된 입력입니다.",
-                                        "errors": {
-                                            "childSchoolNumber": "자녀의 학번을 입력해주세요."
-                                        }
-                                    }
-                                    """)
+                            examples = {
+                                    @ExampleObject(name = "입력값 오류", value = """
+                                            {
+                                                "code": 400,
+                                                "name": "INVALID_INPUT_VALUE",
+                                                "message": "잘못된 입력입니다.",
+                                                "errors": {
+                                                    "childSchoolNumber": "자녀의 학번을 입력해주세요.",
+                                                    "termsAgreed": "이용약관에 동의해주세요.",
+                                                    "privacyAgreed": "개인정보처리방침에 동의해주세요."
+                                                }
+                                            }
+                                            """),
+                                    @ExampleObject(name = "비밀번호 불일치", value = """
+                                            {
+                                                "code": 400,
+                                                "name": "PASSWORD_MISMATCH",
+                                                "message": "비밀번호가 일치하지 않습니다."
+                                            }
+                                            """)
+                            }
                     )
             ),
             @ApiResponse(

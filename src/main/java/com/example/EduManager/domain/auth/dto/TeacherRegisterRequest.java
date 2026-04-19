@@ -18,6 +18,9 @@ public class TeacherRegisterRequest {
     @NotBlank(message = "비밀번호를 입력해주세요.")
     private String password;
 
+    @NotBlank(message = "비밀번호 확인을 입력해주세요.")
+    private String passwordConfirm;
+
     @NotBlank(message = "이름을 입력해주세요.")
     private String name;
 

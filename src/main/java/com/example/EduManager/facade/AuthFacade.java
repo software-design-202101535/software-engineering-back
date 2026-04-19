@@ -8,6 +8,8 @@ import com.example.EduManager.domain.teacher.service.TeacherService;
 import com.example.EduManager.domain.user.entity.Role;
 import com.example.EduManager.domain.user.entity.User;
 import com.example.EduManager.domain.user.service.UserService;
+import com.example.EduManager.global.exception.CustomException;
+import com.example.EduManager.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +25,7 @@ public class AuthFacade {
 
     @Transactional
     public UserResponse registerTeacher(TeacherRegisterRequest request) {
+        validatePasswordConfirm(request.getPassword(), request.getPasswordConfirm());
         User user = userService.registerSchoolUser(
                 request.getEmail(), request.getPassword(), request.getName(),
                 Role.TEACHER, request.getSchool(), request.getSchoolNumber());
@@ -32,6 +35,7 @@ public class AuthFacade {
 
     @Transactional
     public UserResponse registerStudent(StudentRegisterRequest request) {
+        validatePasswordConfirm(request.getPassword(), request.getPasswordConfirm());
         User user = userService.registerSchoolUser(
                 request.getEmail(), request.getPassword(), request.getName(),
                 Role.STUDENT, request.getSchool(), request.getSchoolNumber());
@@ -41,6 +45,7 @@ public class AuthFacade {
 
     @Transactional
     public UserResponse registerParent(ParentRegisterRequest request) {
+        validatePasswordConfirm(request.getPassword(), request.getPasswordConfirm());
         User parent = userService.registerParentUser(
                 request.getEmail(), request.getPassword(), request.getName());
         User childUser = userService.getStudentBySchoolAndSchoolNumber(
@@ -48,6 +53,12 @@ public class AuthFacade {
         StudentProfile childProfile = studentService.getProfileByUser(childUser);
         studentService.linkParent(parent, childProfile);
         return UserResponse.of(parent);
+    }
+
+    private void validatePasswordConfirm(String password, String passwordConfirm) {
+        if (!password.equals(passwordConfirm)) {
+            throw new CustomException(ErrorCode.PASSWORD_MISMATCH);
+        }
     }
 
     @Transactional
