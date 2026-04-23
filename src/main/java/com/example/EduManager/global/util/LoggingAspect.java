@@ -1,6 +1,7 @@
 package com.example.EduManager.global.util;
 
 import com.example.EduManager.global.exception.CustomException;
+import com.example.EduManager.global.security.exception.JwtAuthException;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -47,7 +48,7 @@ public class LoggingAspect {
             long executionTime = System.currentTimeMillis() - startTime;
             log.info("[{} 완료] {} - 실행시간: {}ms", layer, methodName, executionTime);
             return result;
-        } catch (CustomException e) {
+        } catch (CustomException | JwtAuthException e) {
             long executionTime = System.currentTimeMillis() - startTime;
             log.warn("[{} 실패] {} - 실행시간: {}ms, 예외: {}",
                     layer, methodName, executionTime, e.getMessage());
