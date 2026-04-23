@@ -1,7 +1,7 @@
 package com.example.EduManager.domain.attendance.entity;
 
 import com.example.EduManager.domain.student.entity.StudentProfile;
-import com.example.EduManager.domain.user.entity.User;
+import com.example.EduManager.domain.teacher.entity.TeacherProfile;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -40,13 +40,13 @@ public class Attendance {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", nullable = false)
-    private User createdBy;
+    private TeacherProfile createdBy;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    public static Attendance of(StudentProfile student, LocalDate date, AttendanceStatus status, String note, User createdBy) {
+    public static Attendance of(StudentProfile student, LocalDate date, AttendanceStatus status, String note, TeacherProfile createdBy) {
         Attendance attendance = new Attendance();
         attendance.student = student;
         attendance.date = date;

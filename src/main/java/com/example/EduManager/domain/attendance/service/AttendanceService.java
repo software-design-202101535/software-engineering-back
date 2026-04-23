@@ -5,7 +5,7 @@ import com.example.EduManager.domain.attendance.dto.UpdateAttendanceRequest;
 import com.example.EduManager.domain.attendance.entity.Attendance;
 import com.example.EduManager.domain.attendance.repository.AttendanceRepository;
 import com.example.EduManager.domain.student.entity.StudentProfile;
-import com.example.EduManager.domain.user.entity.User;
+import com.example.EduManager.domain.teacher.entity.TeacherProfile;
 import com.example.EduManager.global.exception.CustomException;
 import com.example.EduManager.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ public class AttendanceService {
         return attendanceRepository.findByStudentIdAndYearAndMonth(studentId, year, month);
     }
 
-    public Attendance save(StudentProfile student, CreateAttendanceRequest request, User createdBy) {
+    public Attendance save(StudentProfile student, CreateAttendanceRequest request, TeacherProfile createdBy) {
         return attendanceRepository.save(
                 Attendance.of(student, request.getDate(), request.getStatus(), request.getReason(), createdBy)
         );

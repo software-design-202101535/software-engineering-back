@@ -12,7 +12,6 @@ import com.example.EduManager.domain.teacher.service.TeacherService;
 import com.example.EduManager.domain.user.entity.Role;
 import com.example.EduManager.domain.user.entity.School;
 import com.example.EduManager.domain.user.entity.User;
-import com.example.EduManager.domain.user.service.UserService;
 import com.example.EduManager.global.exception.CustomException;
 import com.example.EduManager.global.exception.ErrorCode;
 import com.example.EduManager.global.security.UserDetailsImpl;
@@ -42,7 +41,6 @@ class AttendanceOperationFacadeTest {
     @Mock AttendanceService attendanceService;
     @Mock StudentService studentService;
     @Mock TeacherService teacherService;
-    @Mock UserService userService;
 
     @InjectMocks
     AttendanceOperationFacade facade;
@@ -149,15 +147,13 @@ class AttendanceOperationFacadeTest {
                 LocalDate.of(2025, 3, 10), AttendanceStatus.ABSENT, "감기");
 
         @Test
-        @DisplayName("TC-2-1. 담임 TEACHER → userService.getById → attendanceService.save 순서, 응답 반환")
+        @DisplayName("TC-2-1. 담임 TEACHER → attendanceService.save 호출, 응답 반환")
         void homeroomTeacher() {
             UserDetailsImpl teacher = UserDetailsImpl.create(10L, Role.TEACHER);
-            User teacherUser = mock(User.class);
             when(studentService.getById(2L)).thenReturn(student);
             stubStudent();
             stubHomeroomTeacher(10L);
-            when(userService.getById(10L)).thenReturn(teacherUser);
-            when(attendanceService.save(student, request, teacherUser)).thenReturn(attendance);
+            when(attendanceService.save(student, request, homeroomTeacher)).thenReturn(attendance);
             when(attendance.getStudent()).thenReturn(student);
             when(attendance.getDate()).thenReturn(request.getDate());
             when(attendance.getStatus()).thenReturn(request.getStatus());
@@ -165,8 +161,7 @@ class AttendanceOperationFacadeTest {
             var response = facade.create(2L, request, teacher);
 
             assertAll(
-                    () -> verify(userService).getById(10L),
-                    () -> verify(attendanceService).save(student, request, teacherUser),
+                    () -> verify(attendanceService).save(student, request, homeroomTeacher),
                     () -> assertNotNull(response)
             );
         }
