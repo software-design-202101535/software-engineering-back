@@ -7,9 +7,10 @@ import com.example.EduManager.domain.counseling.entity.Counseling;
 import com.example.EduManager.domain.counseling.service.CounselingService;
 import com.example.EduManager.domain.student.entity.StudentProfile;
 import com.example.EduManager.domain.student.service.StudentService;
+import com.example.EduManager.domain.teacher.entity.TeacherProfile;
+import com.example.EduManager.domain.teacher.service.TeacherService;
 import com.example.EduManager.domain.user.entity.Role;
 import com.example.EduManager.domain.user.entity.User;
-import com.example.EduManager.domain.user.service.UserService;
 import com.example.EduManager.global.exception.CustomException;
 import com.example.EduManager.global.exception.ErrorCode;
 import com.example.EduManager.global.security.UserDetailsImpl;
@@ -38,11 +39,12 @@ class CounselingOperationFacadeTest {
 
     @Mock CounselingService counselingService;
     @Mock StudentService studentService;
-    @Mock UserService userService;
+    @Mock TeacherService teacherService;
 
     @InjectMocks CounselingOperationFacade facade;
 
     @Mock StudentProfile studentProfile;
+    @Mock TeacherProfile teacherProfile;
     @Mock User teacherUser;
     @Mock Counseling counseling;
 
@@ -50,7 +52,8 @@ class CounselingOperationFacadeTest {
         when(counseling.getId()).thenReturn(1L);
         when(counseling.getStudent()).thenReturn(studentProfile);
         when(studentProfile.getId()).thenReturn(2L);
-        when(counseling.getTeacher()).thenReturn(teacherUser);
+        when(counseling.getTeacher()).thenReturn(teacherProfile);
+        when(teacherProfile.getUser()).thenReturn(teacherUser);
         when(teacherUser.getId()).thenReturn(10L);
         when(teacherUser.getName()).thenReturn("김선생");
         when(counseling.getDate()).thenReturn(LocalDate.of(2026, 3, 15));
@@ -59,7 +62,8 @@ class CounselingOperationFacadeTest {
     }
 
     private void stubAuthor(Long authorUserId) {
-        when(counseling.getTeacher()).thenReturn(teacherUser);
+        when(counseling.getTeacher()).thenReturn(teacherProfile);
+        when(teacherProfile.getUser()).thenReturn(teacherUser);
         when(teacherUser.getId()).thenReturn(authorUserId);
     }
 
@@ -120,14 +124,14 @@ class CounselingOperationFacadeTest {
         void teacher() {
             UserDetailsImpl teacher = UserDetailsImpl.create(10L, Role.TEACHER);
             when(studentService.getById(2L)).thenReturn(studentProfile);
-            when(userService.getById(10L)).thenReturn(teacherUser);
-            when(counselingService.save(studentProfile, teacherUser, request)).thenReturn(counseling);
+            when(teacherService.getProfileByUserId(10L)).thenReturn(teacherProfile);
+            when(counselingService.save(studentProfile, teacherProfile, request)).thenReturn(counseling);
             stubCounselingForResponse();
 
             var response = facade.create(2L, request, teacher);
 
             assertAll(
-                    () -> verify(counselingService).save(studentProfile, teacherUser, request),
+                    () -> verify(counselingService).save(studentProfile, teacherProfile, request),
                     () -> assertNotNull(response)
             );
         }

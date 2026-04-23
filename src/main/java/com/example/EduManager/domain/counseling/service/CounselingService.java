@@ -6,7 +6,7 @@ import com.example.EduManager.domain.counseling.dto.UpdateCounselingShareRequest
 import com.example.EduManager.domain.counseling.entity.Counseling;
 import com.example.EduManager.domain.counseling.repository.CounselingRepository;
 import com.example.EduManager.domain.student.entity.StudentProfile;
-import com.example.EduManager.domain.user.entity.User;
+import com.example.EduManager.domain.teacher.entity.TeacherProfile;
 import com.example.EduManager.global.exception.CustomException;
 import com.example.EduManager.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +28,7 @@ public class CounselingService {
         return counselingRepository.findByStudentForTeacherByYearAndMonth(studentId, teacherId, year, month);
     }
 
-    public Counseling save(StudentProfile student, User teacher, CreateCounselingRequest request) {
+    public Counseling save(StudentProfile student, TeacherProfile teacher, CreateCounselingRequest request) {
         return counselingRepository.save(
                 Counseling.of(student, teacher, request.getCounselingDate(), request.getContent(),
                         request.getNextPlan(), request.getNextDate(), request.isSharedWithTeachers())

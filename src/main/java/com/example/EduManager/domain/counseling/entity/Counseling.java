@@ -1,7 +1,7 @@
 package com.example.EduManager.domain.counseling.entity;
 
 import com.example.EduManager.domain.student.entity.StudentProfile;
-import com.example.EduManager.domain.user.entity.User;
+import com.example.EduManager.domain.teacher.entity.TeacherProfile;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -30,7 +30,7 @@ public class Counseling {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "teacher_id", nullable = false)
-    private User teacher;
+    private TeacherProfile teacher;
 
     @Column(name = "counseling_date", nullable = false)
     private LocalDate date;
@@ -54,7 +54,7 @@ public class Counseling {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    public static Counseling of(StudentProfile student, User teacher, LocalDate date, String content,
+    public static Counseling of(StudentProfile student, TeacherProfile teacher, LocalDate date, String content,
                                 String nextPlan, LocalDate nextDate, boolean sharedWithTeachers) {
         Counseling counseling = new Counseling();
         counseling.student = student;

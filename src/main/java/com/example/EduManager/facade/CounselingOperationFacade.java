@@ -8,9 +8,9 @@ import com.example.EduManager.domain.counseling.entity.Counseling;
 import com.example.EduManager.domain.counseling.service.CounselingService;
 import com.example.EduManager.domain.student.entity.StudentProfile;
 import com.example.EduManager.domain.student.service.StudentService;
+import com.example.EduManager.domain.teacher.entity.TeacherProfile;
+import com.example.EduManager.domain.teacher.service.TeacherService;
 import com.example.EduManager.domain.user.entity.Role;
-import com.example.EduManager.domain.user.entity.User;
-import com.example.EduManager.domain.user.service.UserService;
 import com.example.EduManager.global.exception.CustomException;
 import com.example.EduManager.global.exception.ErrorCode;
 import com.example.EduManager.global.security.UserDetailsImpl;
@@ -26,7 +26,7 @@ public class CounselingOperationFacade {
 
     private final CounselingService counselingService;
     private final StudentService studentService;
-    private final UserService userService;
+    private final TeacherService teacherService;
 
     @Transactional(readOnly = true)
     public List<CounselingResponse> getList(Long studentId, int year, Integer month, UserDetailsImpl userDetails) {
@@ -40,7 +40,7 @@ public class CounselingOperationFacade {
     public CounselingResponse create(Long studentId, CreateCounselingRequest request, UserDetailsImpl userDetails) {
         checkTeacherOrAdmin(userDetails.getRole());
         StudentProfile student = studentService.getById(studentId);
-        User teacher = userService.getById(userDetails.getUserId());
+        TeacherProfile teacher = teacherService.getProfileByUserId(userDetails.getUserId());
         return CounselingResponse.of(counselingService.save(student, teacher, request));
     }
 
@@ -85,7 +85,7 @@ public class CounselingOperationFacade {
 
     private void checkAuthor(Counseling counseling, UserDetailsImpl userDetails) {
         if (userDetails.getRole() == Role.ADMIN) return;
-        if (!counseling.getTeacher().getId().equals(userDetails.getUserId())) {
+        if (!counseling.getTeacher().getUser().getId().equals(userDetails.getUserId())) {
             throw new CustomException(ErrorCode.COUNSELING_ACCESS_DENIED);
         }
     }
