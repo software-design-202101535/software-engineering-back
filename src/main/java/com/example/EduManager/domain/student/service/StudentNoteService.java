@@ -6,7 +6,7 @@ import com.example.EduManager.domain.student.entity.NoteCategory;
 import com.example.EduManager.domain.student.entity.StudentNote;
 import com.example.EduManager.domain.student.entity.StudentProfile;
 import com.example.EduManager.domain.student.repository.StudentNoteRepository;
-import com.example.EduManager.domain.user.entity.User;
+import com.example.EduManager.domain.teacher.entity.TeacherProfile;
 import com.example.EduManager.global.exception.CustomException;
 import com.example.EduManager.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +27,7 @@ public class StudentNoteService {
         return studentNoteRepository.findAllByStudentId(studentId);
     }
 
-    public StudentNote save(StudentProfile student, CreateNoteRequest request, User teacher) {
+    public StudentNote save(StudentProfile student, CreateNoteRequest request, TeacherProfile teacher) {
         return studentNoteRepository.save(
                 StudentNote.of(student, request.getCategory(), request.getContent(), request.getDate(), teacher)
         );

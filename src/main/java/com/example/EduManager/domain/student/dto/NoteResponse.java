@@ -21,7 +21,7 @@ public class NoteResponse {
         NoteResponse response = new NoteResponse();
         response.id = note.getId();
         response.studentId = note.getStudent().getId();
-        response.teacherId = note.getTeacher().getId();
+        response.teacherId = note.getTeacher().getUser().getId();
         response.category = note.getCategory().name();
         response.content = note.getContent();
         response.date = note.getDate();

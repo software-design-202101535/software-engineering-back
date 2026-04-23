@@ -1,6 +1,6 @@
 package com.example.EduManager.domain.student.entity;
 
-import com.example.EduManager.domain.user.entity.User;
+import com.example.EduManager.domain.teacher.entity.TeacherProfile;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -39,7 +39,7 @@ public class StudentNote {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "teacher_id", nullable = false)
-    private User teacher;
+    private TeacherProfile teacher;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
@@ -50,7 +50,7 @@ public class StudentNote {
     private LocalDateTime updatedAt;
 
     public static StudentNote of(StudentProfile student, NoteCategory category,
-                                 String content, LocalDate date, User teacher) {
+                                 String content, LocalDate date, TeacherProfile teacher) {
         StudentNote note = new StudentNote();
         note.student = student;
         note.category = category;

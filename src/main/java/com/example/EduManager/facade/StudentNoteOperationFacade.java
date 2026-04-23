@@ -11,7 +11,6 @@ import com.example.EduManager.domain.student.service.StudentService;
 import com.example.EduManager.domain.teacher.entity.TeacherProfile;
 import com.example.EduManager.domain.teacher.service.TeacherService;
 import com.example.EduManager.domain.user.entity.Role;
-import com.example.EduManager.domain.user.service.UserService;
 import com.example.EduManager.global.exception.CustomException;
 import com.example.EduManager.global.exception.ErrorCode;
 import com.example.EduManager.global.security.UserDetailsImpl;
@@ -28,7 +27,6 @@ public class StudentNoteOperationFacade {
     private final StudentNoteService studentNoteService;
     private final StudentService studentService;
     private final TeacherService teacherService;
-    private final UserService userService;
 
     @Transactional(readOnly = true)
     public List<NoteResponse> getList(Long studentId, NoteCategory category, UserDetailsImpl userDetails) {
@@ -44,7 +42,7 @@ public class StudentNoteOperationFacade {
         StudentProfile student = studentService.getById(studentId);
         checkHomeroomAccess(userDetails.getUserId(), student, userDetails.getRole());
         return NoteResponse.of(
-                studentNoteService.save(student, request, userService.getById(userDetails.getUserId()))
+                studentNoteService.save(student, request, teacherService.getProfileByUserId(userDetails.getUserId()))
         );
     }
 

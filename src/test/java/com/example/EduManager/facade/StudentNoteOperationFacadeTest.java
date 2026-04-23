@@ -12,7 +12,6 @@ import com.example.EduManager.domain.teacher.service.TeacherService;
 import com.example.EduManager.domain.user.entity.Role;
 import com.example.EduManager.domain.user.entity.School;
 import com.example.EduManager.domain.user.entity.User;
-import com.example.EduManager.domain.user.service.UserService;
 import com.example.EduManager.global.exception.CustomException;
 import com.example.EduManager.global.exception.ErrorCode;
 import com.example.EduManager.global.security.UserDetailsImpl;
@@ -40,7 +39,6 @@ class StudentNoteOperationFacadeTest {
     @Mock StudentNoteService studentNoteService;
     @Mock StudentService studentService;
     @Mock TeacherService teacherService;
-    @Mock UserService userService;
 
     @InjectMocks
     StudentNoteOperationFacade facade;
@@ -141,17 +139,15 @@ class StudentNoteOperationFacadeTest {
                 NoteCategory.ACHIEVEMENT, "수학 올림피아드 수상", LocalDate.of(2025, 3, 10));
 
         @Test
-        @DisplayName("TC-2-1. 담임 TEACHER → userService.getById → save 순서, 응답 반환")
+        @DisplayName("TC-2-1. 담임 TEACHER → save 호출, 응답 반환")
         void homeroomTeacher() {
             UserDetailsImpl teacher = UserDetailsImpl.create(10L, Role.TEACHER);
-            User teacherUser = mock(User.class);
             when(studentService.getById(2L)).thenReturn(student);
             stubStudent();
             stubHomeroomTeacher(10L);
-            when(userService.getById(10L)).thenReturn(teacherUser);
-            when(studentNoteService.save(student, request, teacherUser)).thenReturn(note);
+            when(studentNoteService.save(student, request, homeroomTeacher)).thenReturn(note);
             when(note.getStudent()).thenReturn(student);
-            when(note.getTeacher()).thenReturn(teacherUser);
+            when(note.getTeacher()).thenReturn(homeroomTeacher);
             when(note.getCategory()).thenReturn(NoteCategory.ACHIEVEMENT);
             when(note.getContent()).thenReturn("수학 올림피아드 수상");
             when(note.getDate()).thenReturn(LocalDate.of(2025, 3, 10));
@@ -159,8 +155,7 @@ class StudentNoteOperationFacadeTest {
             var response = facade.create(2L, request, teacher);
 
             assertAll(
-                    () -> verify(userService).getById(10L),
-                    () -> verify(studentNoteService).save(student, request, teacherUser),
+                    () -> verify(studentNoteService).save(student, request, homeroomTeacher),
                     () -> assertNotNull(response)
             );
         }
@@ -200,7 +195,7 @@ class StudentNoteOperationFacadeTest {
             when(studentNoteService.getByIdAndStudentId(5L, 2L)).thenReturn(note);
             when(studentNoteService.update(note, request)).thenReturn(note);
             when(note.getStudent()).thenReturn(student);
-            when(note.getTeacher()).thenReturn(mock(User.class));
+            when(note.getTeacher()).thenReturn(homeroomTeacher);
             when(note.getCategory()).thenReturn(NoteCategory.VOLUNTEER);
             when(note.getContent()).thenReturn("봉사 활동");
             when(note.getDate()).thenReturn(LocalDate.of(2025, 4, 1));
