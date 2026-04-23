@@ -9,6 +9,8 @@ import com.example.EduManager.domain.feedback.entity.FeedbackCategory;
 import com.example.EduManager.domain.feedback.service.FeedbackService;
 import com.example.EduManager.domain.student.entity.StudentProfile;
 import com.example.EduManager.domain.student.service.StudentService;
+import com.example.EduManager.domain.teacher.entity.TeacherProfile;
+import com.example.EduManager.domain.teacher.service.TeacherService;
 import com.example.EduManager.domain.user.entity.Role;
 import com.example.EduManager.domain.user.entity.User;
 import com.example.EduManager.domain.user.service.UserService;
@@ -27,6 +29,7 @@ public class FeedbackOperationFacade {
 
     private final FeedbackService feedbackService;
     private final StudentService studentService;
+    private final TeacherService teacherService;
     private final UserService userService;
 
     @Transactional(readOnly = true)
@@ -44,7 +47,7 @@ public class FeedbackOperationFacade {
     public FeedbackResponse create(Long studentId, CreateFeedbackRequest request, UserDetailsImpl userDetails) {
         checkTeacherOrAdmin(userDetails.getRole());
         StudentProfile student = studentService.getById(studentId);
-        User teacher = userService.getById(userDetails.getUserId());
+        TeacherProfile teacher = teacherService.getProfileByUserId(userDetails.getUserId());
         return FeedbackResponse.of(feedbackService.save(student, teacher, request));
     }
 
@@ -117,7 +120,7 @@ public class FeedbackOperationFacade {
 
     private void checkAuthor(Feedback feedback, UserDetailsImpl userDetails) {
         if (userDetails.getRole() == Role.ADMIN) return;
-        if (!feedback.getTeacher().getId().equals(userDetails.getUserId())) {
+        if (!feedback.getTeacher().getUser().getId().equals(userDetails.getUserId())) {
             throw new CustomException(ErrorCode.FEEDBACK_ACCESS_DENIED);
         }
     }

@@ -7,7 +7,7 @@ import com.example.EduManager.domain.feedback.entity.Feedback;
 import com.example.EduManager.domain.feedback.entity.FeedbackCategory;
 import com.example.EduManager.domain.feedback.repository.FeedbackRepository;
 import com.example.EduManager.domain.student.entity.StudentProfile;
-import com.example.EduManager.domain.user.entity.User;
+import com.example.EduManager.domain.teacher.entity.TeacherProfile;
 import com.example.EduManager.global.exception.CustomException;
 import com.example.EduManager.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +45,7 @@ public class FeedbackService {
         return feedbackRepository.findAllByStudentIdAndParentVisibleTrueAndCategory(studentId, category);
     }
 
-    public Feedback save(StudentProfile student, User teacher, CreateFeedbackRequest request) {
+    public Feedback save(StudentProfile student, TeacherProfile teacher, CreateFeedbackRequest request) {
         return feedbackRepository.save(
                 Feedback.of(student, teacher, request.getCategory(), request.getDate(),
                         request.getContent(), request.isStudentVisible(), request.isParentVisible())

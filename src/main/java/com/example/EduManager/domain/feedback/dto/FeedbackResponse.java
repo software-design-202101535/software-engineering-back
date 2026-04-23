@@ -16,20 +16,20 @@ public class FeedbackResponse {
     private final String content;
     private final boolean studentVisible;
     private final boolean parentVisible;
-    private final Long authorId;
-    private final String authorName;
+    private final Long teacherId;
+    private final String teacherName;
 
     @Builder
     private FeedbackResponse(Long id, FeedbackCategory category, LocalDate date, String content,
-                              boolean studentVisible, boolean parentVisible, Long authorId, String authorName) {
+                              boolean studentVisible, boolean parentVisible, Long teacherId, String teacherName) {
         this.id = id;
         this.category = category;
         this.date = date;
         this.content = content;
         this.studentVisible = studentVisible;
         this.parentVisible = parentVisible;
-        this.authorId = authorId;
-        this.authorName = authorName;
+        this.teacherId = teacherId;
+        this.teacherName = teacherName;
     }
 
     public static FeedbackResponse of(Feedback feedback) {
@@ -40,8 +40,8 @@ public class FeedbackResponse {
                 .content(feedback.getContent())
                 .studentVisible(feedback.isStudentVisible())
                 .parentVisible(feedback.isParentVisible())
-                .authorId(feedback.getTeacher().getId())
-                .authorName(feedback.getTeacher().getName())
+                .teacherId(feedback.getTeacher().getUser().getId())
+                .teacherName(feedback.getTeacher().getUser().getName())
                 .build();
     }
 }

@@ -8,6 +8,8 @@ import com.example.EduManager.domain.feedback.entity.FeedbackCategory;
 import com.example.EduManager.domain.feedback.service.FeedbackService;
 import com.example.EduManager.domain.student.entity.StudentProfile;
 import com.example.EduManager.domain.student.service.StudentService;
+import com.example.EduManager.domain.teacher.entity.TeacherProfile;
+import com.example.EduManager.domain.teacher.service.TeacherService;
 import com.example.EduManager.domain.user.entity.Role;
 import com.example.EduManager.domain.user.entity.User;
 import com.example.EduManager.domain.user.service.UserService;
@@ -37,23 +39,27 @@ class FeedbackOperationFacadeTest {
 
     @Mock FeedbackService feedbackService;
     @Mock StudentService studentService;
+    @Mock TeacherService teacherService;
     @Mock UserService userService;
 
     @InjectMocks FeedbackOperationFacade facade;
 
     @Mock StudentProfile studentProfile;
+    @Mock TeacherProfile teacherProfile;
     @Mock User teacherUser;
     @Mock Feedback feedback;
 
     private void stubFeedbackForResponse() {
-        when(feedback.getTeacher()).thenReturn(teacherUser);
+        when(feedback.getTeacher()).thenReturn(teacherProfile);
+        when(teacherProfile.getUser()).thenReturn(teacherUser);
         when(feedback.getCategory()).thenReturn(FeedbackCategory.GRADE);
         when(feedback.getDate()).thenReturn(LocalDate.of(2025, 3, 14));
         when(feedback.getContent()).thenReturn("내용");
     }
 
     private void stubAuthor(Long authorUserId) {
-        when(feedback.getTeacher()).thenReturn(teacherUser);
+        when(feedback.getTeacher()).thenReturn(teacherProfile);
+        when(teacherProfile.getUser()).thenReturn(teacherUser);
         when(teacherUser.getId()).thenReturn(authorUserId);
     }
 
@@ -162,14 +168,14 @@ class FeedbackOperationFacadeTest {
         void teacher() {
             UserDetailsImpl teacher = UserDetailsImpl.create(10L, Role.TEACHER);
             when(studentService.getById(2L)).thenReturn(studentProfile);
-            when(userService.getById(10L)).thenReturn(teacherUser);
-            when(feedbackService.save(studentProfile, teacherUser, request)).thenReturn(feedback);
+            when(teacherService.getProfileByUserId(10L)).thenReturn(teacherProfile);
+            when(feedbackService.save(studentProfile, teacherProfile, request)).thenReturn(feedback);
             stubFeedbackForResponse();
 
             var response = facade.create(2L, request, teacher);
 
             assertAll(
-                    () -> verify(feedbackService).save(studentProfile, teacherUser, request),
+                    () -> verify(feedbackService).save(studentProfile, teacherProfile, request),
                     () -> assertNotNull(response)
             );
         }

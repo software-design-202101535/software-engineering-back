@@ -1,7 +1,7 @@
 package com.example.EduManager.domain.feedback.entity;
 
 import com.example.EduManager.domain.student.entity.StudentProfile;
-import com.example.EduManager.domain.user.entity.User;
+import com.example.EduManager.domain.teacher.entity.TeacherProfile;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -30,7 +30,7 @@ public class Feedback {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "teacher_id", nullable = false)
-    private User teacher;
+    private TeacherProfile teacher;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -56,7 +56,7 @@ public class Feedback {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    public static Feedback of(StudentProfile student, User teacher,
+    public static Feedback of(StudentProfile student, TeacherProfile teacher,
                               FeedbackCategory category, LocalDate date, String content,
                               boolean studentVisible, boolean parentVisible) {
         Feedback feedback = new Feedback();
