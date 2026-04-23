@@ -1,6 +1,5 @@
 package com.example.EduManager.domain.auth.dto;
 
-import com.example.EduManager.domain.user.entity.School;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -23,8 +22,8 @@ public class ParentRegisterRequest {
     @NotBlank(message = "이름을 입력해주세요.")
     private String name;
 
-    @NotNull(message = "자녀의 학교를 선택해주세요.")
-    private School childSchool;
+    @NotBlank(message = "자녀의 학교를 선택해주세요.")
+    private String childSchool;
 
     @NotBlank(message = "자녀의 학번을 입력해주세요.")
     private String childSchoolNumber;

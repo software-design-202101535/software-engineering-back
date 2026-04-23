@@ -27,6 +27,7 @@ public enum ErrorCode {
     // 인증
     BAD_CREDENTIALS(HttpStatus.UNAUTHORIZED, 401, "이메일 또는 비밀번호가 올바르지 않습니다."),
     PASSWORD_MISMATCH(HttpStatus.BAD_REQUEST, 400, "비밀번호가 일치하지 않습니다."),
+    INVALID_SCHOOL(HttpStatus.BAD_REQUEST, 400, "올바르지 않은 학교입니다."),
 
     // HTTP 요청
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, 405, "잘못된 요청 방식입니다."),

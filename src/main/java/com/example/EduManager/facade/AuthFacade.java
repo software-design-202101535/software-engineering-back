@@ -6,10 +6,12 @@ import com.example.EduManager.domain.student.entity.StudentProfile;
 import com.example.EduManager.domain.student.service.StudentService;
 import com.example.EduManager.domain.teacher.service.TeacherService;
 import com.example.EduManager.domain.user.entity.Role;
+import com.example.EduManager.domain.user.entity.School;
 import com.example.EduManager.domain.user.entity.User;
 import com.example.EduManager.domain.user.service.UserService;
 import com.example.EduManager.global.exception.CustomException;
 import com.example.EduManager.global.exception.ErrorCode;
+import com.example.EduManager.global.util.EnumConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,28 +28,31 @@ public class AuthFacade {
     @Transactional
     public void registerTeacher(TeacherRegisterRequest request) {
         validatePasswordConfirm(request.getPassword(), request.getPasswordConfirm());
+        School school = EnumConverter.stringToEnum(request.getSchool(), School.class, ErrorCode.INVALID_SCHOOL);
         User user = userService.registerSchoolUser(
                 request.getEmail(), request.getPassword(), request.getName(),
-                Role.TEACHER, request.getSchool(), request.getSchoolNumber());
+                Role.TEACHER, school, request.getSchoolNumber());
         teacherService.createProfile(user, request.getGrade(), request.getClassNum());
     }
 
     @Transactional
     public void registerStudent(StudentRegisterRequest request) {
         validatePasswordConfirm(request.getPassword(), request.getPasswordConfirm());
+        School school = EnumConverter.stringToEnum(request.getSchool(), School.class, ErrorCode.INVALID_SCHOOL);
         User user = userService.registerSchoolUser(
                 request.getEmail(), request.getPassword(), request.getName(),
-                Role.STUDENT, request.getSchool(), request.getSchoolNumber());
+                Role.STUDENT, school, request.getSchoolNumber());
         studentService.createProfile(user, request.getGrade(), request.getClassNum(), request.getNumber());
     }
 
     @Transactional
     public void registerParent(ParentRegisterRequest request) {
         validatePasswordConfirm(request.getPassword(), request.getPasswordConfirm());
+        School childSchool = EnumConverter.stringToEnum(request.getChildSchool(), School.class, ErrorCode.INVALID_SCHOOL);
         User parent = userService.registerParentUser(
                 request.getEmail(), request.getPassword(), request.getName());
         User childUser = userService.getStudentBySchoolAndSchoolNumber(
-                request.getChildSchool(), request.getChildSchoolNumber());
+                childSchool, request.getChildSchoolNumber());
         StudentProfile childProfile = studentService.getProfileByUser(childUser);
         studentService.linkParent(parent, childProfile);
     }
@@ -60,7 +65,8 @@ public class AuthFacade {
 
     @Transactional
     public LoginResponse loginBySchool(SchoolLoginRequest request) {
-        User user = userService.getBySchoolAndSchoolNumber(request.getSchool(), request.getSchoolNumber());
+        School school = EnumConverter.stringToEnum(request.getSchool(), School.class, ErrorCode.INVALID_SCHOOL);
+        User user = userService.getBySchoolAndSchoolNumber(school, request.getSchoolNumber());
         return buildLoginResponse(user, request.getPassword());
     }
 

@@ -1,6 +1,5 @@
 package com.example.EduManager.domain.auth.dto;
 
-import com.example.EduManager.domain.user.entity.School;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Min;
@@ -24,8 +23,8 @@ public class StudentRegisterRequest {
     @NotBlank(message = "이름을 입력해주세요.")
     private String name;
 
-    @NotNull(message = "학교를 선택해주세요.")
-    private School school;
+    @NotBlank(message = "학교를 선택해주세요.")
+    private String school;
 
     @NotBlank(message = "학번을 입력해주세요.")
     private String schoolNumber;
