@@ -41,5 +41,5 @@ DB.md
 application.yml
 application-local.yml
 *.sql
-
+erd.html
 

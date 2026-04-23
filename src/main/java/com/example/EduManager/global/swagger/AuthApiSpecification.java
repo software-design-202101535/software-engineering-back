@@ -24,20 +24,7 @@ public interface AuthApiSpecification {
     @SecurityRequirements(value = {})
     @Operation(summary = "교사 회원가입", description = "담임 학년/반 정보를 포함해 교사 계정을 생성합니다.")
     @ApiResponses({
-            @ApiResponse(
-                    responseCode = "201", description = "회원가입 성공",
-                    content = @Content(
-                            schema = @Schema(implementation = UserResponse.class),
-                            examples = @ExampleObject("""
-                                    {
-                                        "id": 1,
-                                        "email": "teacher@school.com",
-                                        "name": "김교사",
-                                        "role": "TEACHER"
-                                    }
-                                    """)
-                    )
-            ),
+            @ApiResponse(responseCode = "201", description = "회원가입 성공"),
             @ApiResponse(
                     responseCode = "400", description = "입력값 오류 / 비밀번호 불일치 / 약관 미동의",
                     content = @Content(
@@ -79,25 +66,12 @@ public interface AuthApiSpecification {
                     )
             )
     })
-    ResponseEntity<UserResponse> registerTeacher(@Valid @RequestBody TeacherRegisterRequest request);
+    ResponseEntity<Void> registerTeacher(@Valid @RequestBody TeacherRegisterRequest request);
 
     @SecurityRequirements(value = {})
     @Operation(summary = "학생 회원가입", description = "학년/반/번호 정보를 포함해 학생 계정을 생성합니다.")
     @ApiResponses({
-            @ApiResponse(
-                    responseCode = "201", description = "회원가입 성공",
-                    content = @Content(
-                            schema = @Schema(implementation = UserResponse.class),
-                            examples = @ExampleObject("""
-                                    {
-                                        "id": 2,
-                                        "email": "student@school.com",
-                                        "name": "이학생",
-                                        "role": "STUDENT"
-                                    }
-                                    """)
-                    )
-            ),
+            @ApiResponse(responseCode = "201", description = "회원가입 성공"),
             @ApiResponse(
                     responseCode = "400", description = "입력값 오류 / 비밀번호 불일치 / 약관 미동의",
                     content = @Content(
@@ -139,25 +113,12 @@ public interface AuthApiSpecification {
                     )
             )
     })
-    ResponseEntity<UserResponse> registerStudent(@Valid @RequestBody StudentRegisterRequest request);
+    ResponseEntity<Void> registerStudent(@Valid @RequestBody StudentRegisterRequest request);
 
     @SecurityRequirements(value = {})
     @Operation(summary = "학부모 회원가입", description = "자녀의 학교와 학번으로 자녀를 확인하고 연결합니다.")
     @ApiResponses({
-            @ApiResponse(
-                    responseCode = "201", description = "회원가입 성공",
-                    content = @Content(
-                            schema = @Schema(implementation = UserResponse.class),
-                            examples = @ExampleObject("""
-                                    {
-                                        "id": 3,
-                                        "email": "parent@email.com",
-                                        "name": "박학부모",
-                                        "role": "PARENT"
-                                    }
-                                    """)
-                    )
-            ),
+            @ApiResponse(responseCode = "201", description = "회원가입 성공"),
             @ApiResponse(
                     responseCode = "400", description = "입력값 오류 / 비밀번호 불일치 / 약관 미동의",
                     content = @Content(
@@ -212,7 +173,7 @@ public interface AuthApiSpecification {
                     )
             )
     })
-    ResponseEntity<UserResponse> registerParent(@Valid @RequestBody ParentRegisterRequest request);
+    ResponseEntity<Void> registerParent(@Valid @RequestBody ParentRegisterRequest request);
 
     @SecurityRequirements(value = {})
     @Operation(summary = "교사·학생 로그인", description = "학교 + 사번/학번으로 로그인합니다. Refresh Token은 HttpOnly 쿠키(refreshToken)로 발급됩니다. 학생 로그인 시 studentId가 포함됩니다.")
@@ -225,23 +186,21 @@ public interface AuthApiSpecification {
                                     @ExampleObject(name = "교사 로그인", value = """
                                             {
                                                 "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
-                                                "user": {
-                                                    "id": 1,
-                                                    "email": "teacher@school.com",
-                                                    "name": "김교사",
-                                                    "role": "TEACHER"
-                                                }
+                                                "userId": 1,
+                                                "email": "teacher@school.com",
+                                                "name": "김교사",
+                                                "role": "TEACHER",
+                                                "grade": 2,
+                                                "classNum": 3
                                             }
                                             """),
                                     @ExampleObject(name = "학생 로그인", value = """
                                             {
                                                 "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
-                                                "user": {
-                                                    "id": 3,
-                                                    "email": "student@school.com",
-                                                    "name": "이학생",
-                                                    "role": "STUDENT"
-                                                },
+                                                "userId": 3,
+                                                "email": "student@school.com",
+                                                "name": "이학생",
+                                                "role": "STUDENT",
                                                 "studentId": 5
                                             }
                                             """)
@@ -288,12 +247,10 @@ public interface AuthApiSpecification {
                             examples = @ExampleObject("""
                                     {
                                         "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
-                                        "user": {
-                                            "id": 3,
-                                            "email": "parent@email.com",
-                                            "name": "박학부모",
-                                            "role": "PARENT"
-                                        },
+                                        "userId": 3,
+                                        "email": "parent@email.com",
+                                        "name": "박학부모",
+                                        "role": "PARENT",
                                         "children": [
                                             { "studentId": 5, "name": "박자녀" },
                                             { "studentId": 7, "name": "박둘째" }

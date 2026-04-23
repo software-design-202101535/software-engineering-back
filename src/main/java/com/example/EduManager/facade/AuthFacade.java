@@ -24,27 +24,25 @@ public class AuthFacade {
     private final AuthService authService;
 
     @Transactional
-    public UserResponse registerTeacher(TeacherRegisterRequest request) {
+    public void registerTeacher(TeacherRegisterRequest request) {
         validatePasswordConfirm(request.getPassword(), request.getPasswordConfirm());
         User user = userService.registerSchoolUser(
                 request.getEmail(), request.getPassword(), request.getName(),
                 Role.TEACHER, request.getSchool(), request.getSchoolNumber());
         teacherService.createProfile(user, request.getGrade(), request.getClassNum());
-        return UserResponse.of(user);
     }
 
     @Transactional
-    public UserResponse registerStudent(StudentRegisterRequest request) {
+    public void registerStudent(StudentRegisterRequest request) {
         validatePasswordConfirm(request.getPassword(), request.getPasswordConfirm());
         User user = userService.registerSchoolUser(
                 request.getEmail(), request.getPassword(), request.getName(),
                 Role.STUDENT, request.getSchool(), request.getSchoolNumber());
         studentService.createProfile(user, request.getGrade(), request.getClassNum(), request.getNumber());
-        return UserResponse.of(user);
     }
 
     @Transactional
-    public UserResponse registerParent(ParentRegisterRequest request) {
+    public void registerParent(ParentRegisterRequest request) {
         validatePasswordConfirm(request.getPassword(), request.getPasswordConfirm());
         User parent = userService.registerParentUser(
                 request.getEmail(), request.getPassword(), request.getName());
@@ -52,7 +50,6 @@ public class AuthFacade {
                 request.getChildSchool(), request.getChildSchoolNumber());
         StudentProfile childProfile = studentService.getProfileByUser(childUser);
         studentService.linkParent(parent, childProfile);
-        return UserResponse.of(parent);
     }
 
     private void validatePasswordConfirm(String password, String passwordConfirm) {
@@ -80,7 +77,8 @@ public class AuthFacade {
                     studentService.getProfileByUser(user).getId());
             case PARENT -> LoginResponse.ofParent(user, tokens,
                     studentService.getProfilesByParent(user).stream().map(ChildSummary::of).toList());
-            default -> LoginResponse.ofTeacher(user, tokens);
+            default -> LoginResponse.ofTeacher(user, tokens,
+                    teacherService.getProfileByUserId(user.getId()));
         };
     }
 
