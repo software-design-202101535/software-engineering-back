@@ -69,7 +69,7 @@ public class AttendanceOperationFacade {
         TeacherProfile teacher = teacherService.getProfileByUserId(teacherUserId);
         boolean isHomeroom = teacher.getGrade() == student.getGrade()
                 && teacher.getClassNum() == student.getClassNum()
-                && teacher.getUser().getSchool() == student.getUser().getSchool();
+                && teacher.getSchool() == student.getSchool();
 
         if (!isHomeroom) throw new CustomException(ErrorCode.STUDENT_ACCESS_DENIED);
     }

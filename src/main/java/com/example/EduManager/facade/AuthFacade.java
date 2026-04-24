@@ -30,9 +30,8 @@ public class AuthFacade {
         validatePasswordConfirm(request.getPassword(), request.getPasswordConfirm());
         School school = EnumConverter.stringToEnum(request.getSchool(), School.class, ErrorCode.INVALID_SCHOOL);
         User user = userService.registerSchoolUser(
-                request.getEmail(), request.getPassword(), request.getName(),
-                Role.TEACHER, school, request.getSchoolNumber());
-        teacherService.createProfile(user, request.getGrade(), request.getClassNum());
+                request.getEmail(), request.getPassword(), request.getName(), Role.TEACHER);
+        teacherService.createProfile(user, school, request.getGrade(), request.getClassNum());
     }
 
     @Transactional
@@ -40,9 +39,8 @@ public class AuthFacade {
         validatePasswordConfirm(request.getPassword(), request.getPasswordConfirm());
         School school = EnumConverter.stringToEnum(request.getSchool(), School.class, ErrorCode.INVALID_SCHOOL);
         User user = userService.registerSchoolUser(
-                request.getEmail(), request.getPassword(), request.getName(),
-                Role.STUDENT, school, request.getSchoolNumber());
-        studentService.createProfile(user, request.getGrade(), request.getClassNum(), request.getNumber());
+                request.getEmail(), request.getPassword(), request.getName(), Role.STUDENT);
+        studentService.createProfile(user, school, request.getGrade(), request.getClassNum(), request.getNumber());
     }
 
     @Transactional

@@ -1,7 +1,6 @@
 package com.example.EduManager.domain.user.service;
 
 import com.example.EduManager.domain.user.entity.Role;
-import com.example.EduManager.domain.user.entity.School;
 import com.example.EduManager.domain.user.entity.User;
 import com.example.EduManager.domain.user.repository.UserRepository;
 import com.example.EduManager.global.exception.CustomException;
@@ -17,11 +16,11 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public User registerSchoolUser(String email, String rawPassword, String name, Role role, School school, String schoolNumber) {
+    public User registerSchoolUser(String email, String rawPassword, String name, Role role) {
         if (userRepository.existsByEmail(email)) {
             throw new CustomException(ErrorCode.DUPLICATED_USER);
         }
-        return userRepository.save(User.of(email, passwordEncoder.encode(rawPassword), name, role, school, schoolNumber));
+        return userRepository.save(User.of(email, passwordEncoder.encode(rawPassword), name, role));
     }
 
     public User registerParentUser(String email, String rawPassword, String name) {

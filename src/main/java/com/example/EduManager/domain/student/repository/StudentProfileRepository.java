@@ -14,6 +14,6 @@ public interface StudentProfileRepository extends JpaRepository<StudentProfile, 
 
     Optional<StudentProfile> findByUser(User user);
 
-    @Query("SELECT s FROM StudentProfile s JOIN FETCH s.user WHERE s.grade = :grade AND s.classNum = :classNum AND s.user.school = :school ORDER BY s.number ASC")
-    List<StudentProfile> findAllByGradeAndClassNumAndUserSchool(@Param("grade") int grade, @Param("classNum") int classNum, @Param("school") School school);
+    @Query("SELECT s FROM StudentProfile s WHERE s.grade = :grade AND s.classNum = :classNum AND s.school = :school ORDER BY s.number ASC")
+    List<StudentProfile> findAllByGradeAndClassNumAndSchool(@Param("grade") int grade, @Param("classNum") int classNum, @Param("school") School school);
 }

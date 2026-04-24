@@ -1,5 +1,6 @@
 package com.example.EduManager.domain.student.entity;
 
+import com.example.EduManager.domain.user.entity.School;
 import com.example.EduManager.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -22,6 +23,10 @@ public class StudentProfile {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
+    private School school;
+
     @Column(nullable = false)
     private int grade;
 
@@ -43,9 +48,10 @@ public class StudentProfile {
     @Column(length = 255)
     private String address;
 
-    public static StudentProfile of(User user, int grade, int classNum, int number) {
+    public static StudentProfile of(User user, School school, int grade, int classNum, int number) {
         StudentProfile profile = new StudentProfile();
         profile.user = user;
+        profile.school = school;
         profile.grade = grade;
         profile.classNum = classNum;
         profile.number = number;

@@ -7,6 +7,7 @@ import com.example.EduManager.domain.student.repository.ParentStudentRepository;
 import com.example.EduManager.domain.student.repository.StudentProfileRepository;
 import com.example.EduManager.domain.user.entity.School;
 import com.example.EduManager.domain.user.entity.User;
+
 import com.example.EduManager.global.exception.CustomException;
 import com.example.EduManager.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -21,8 +22,8 @@ public class StudentService {
     private final StudentProfileRepository studentProfileRepository;
     private final ParentStudentRepository parentStudentRepository;
 
-    public void createProfile(User user, int grade, int classNum, int number) {
-        studentProfileRepository.save(StudentProfile.of(user, grade, classNum, number));
+    public void createProfile(User user, School school, int grade, int classNum, int number) {
+        studentProfileRepository.save(StudentProfile.of(user, school, grade, classNum, number));
     }
 
     public StudentProfile getProfileByUser(User user) {
@@ -49,7 +50,7 @@ public class StudentService {
     }
 
     public List<StudentProfile> getClassStudents(int grade, int classNum, School school) {
-        return studentProfileRepository.findAllByGradeAndClassNumAndUserSchool(grade, classNum, school);
+        return studentProfileRepository.findAllByGradeAndClassNumAndSchool(grade, classNum, school);
     }
 
     public void linkParent(User parent, StudentProfile student) {
