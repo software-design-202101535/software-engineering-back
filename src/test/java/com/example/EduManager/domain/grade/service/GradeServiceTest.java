@@ -42,8 +42,8 @@ class GradeServiceTest {
 
     @BeforeEach
     void setUp() {
-        User user = User.of("s@test.com", "pw", "학생", Role.STUDENT, School.SUNRIN_HIGH_SCHOOL, "2025001");
-        student = StudentProfile.of(user, 2, 3, 1);
+        User user = User.of("s@test.com", "pw", "학생", Role.STUDENT);
+        student = StudentProfile.of(user, School.SUNRIN_HIGH_SCHOOL, 2, 3, 1);
     }
 
     @Nested
