@@ -64,13 +64,6 @@ public class AuthFacade {
     }
 
     @Transactional
-    public LoginResponse loginBySchool(SchoolLoginRequest request) {
-        School school = EnumConverter.stringToEnum(request.getSchool(), School.class, ErrorCode.INVALID_SCHOOL);
-        User user = userService.getBySchoolAndSchoolNumber(school, request.getSchoolNumber());
-        return buildLoginResponse(user, request.getPassword());
-    }
-
-    @Transactional
     public LoginResponse loginByEmail(EmailLoginRequest request) {
         User user = userService.getByEmail(request.getEmail());
         return buildLoginResponse(user, request.getPassword());

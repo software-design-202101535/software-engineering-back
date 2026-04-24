@@ -41,11 +41,6 @@ public class UserService {
                 .orElseThrow(() -> new CustomException(ErrorCode.BAD_CREDENTIALS));
     }
 
-    public User getBySchoolAndSchoolNumber(School school, String schoolNumber) {
-        return userRepository.findBySchoolAndSchoolNumber(school, schoolNumber)
-                .orElseThrow(() -> new CustomException(ErrorCode.BAD_CREDENTIALS));
-    }
-
     public User getStudentBySchoolAndSchoolNumber(School school, String schoolNumber) {
         return userRepository.findBySchoolAndSchoolNumber(school, schoolNumber)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));

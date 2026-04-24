@@ -176,69 +176,7 @@ public interface AuthApiSpecification {
     ResponseEntity<Void> registerParent(@Valid @RequestBody ParentRegisterRequest request);
 
     @SecurityRequirements(value = {})
-    @Operation(summary = "교사·학생 로그인", description = "학교 + 사번/학번으로 로그인합니다. Refresh Token은 HttpOnly 쿠키(refreshToken)로 발급됩니다. 학생 로그인 시 studentId가 포함됩니다.")
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200", description = "로그인 성공 (교사: studentId 없음 / 학생: studentId 포함)",
-                    content = @Content(
-                            schema = @Schema(implementation = LoginResponse.class),
-                            examples = {
-                                    @ExampleObject(name = "교사 로그인", value = """
-                                            {
-                                                "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
-                                                "userId": 1,
-                                                "email": "teacher@school.com",
-                                                "name": "김교사",
-                                                "role": "TEACHER",
-                                                "grade": 2,
-                                                "classNum": 3
-                                            }
-                                            """),
-                                    @ExampleObject(name = "학생 로그인", value = """
-                                            {
-                                                "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
-                                                "userId": 3,
-                                                "email": "student@school.com",
-                                                "name": "이학생",
-                                                "role": "STUDENT",
-                                                "studentId": 5
-                                            }
-                                            """)
-                            }
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "401", description = "학교/사번 또는 비밀번호 불일치",
-                    content = @Content(
-                            schema = @Schema(implementation = ErrorResponse.class),
-                            examples = @ExampleObject("""
-                                    {
-                                        "code": 401,
-                                        "name": "BAD_CREDENTIALS",
-                                        "message": "이메일 또는 비밀번호가 올바르지 않습니다."
-                                    }
-                                    """)
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "410", description = "삭제된 계정",
-                    content = @Content(
-                            schema = @Schema(implementation = ErrorResponse.class),
-                            examples = @ExampleObject("""
-                                    {
-                                        "code": 410,
-                                        "name": "USER_DELETED",
-                                        "message": "삭제된 사용자입니다."
-                                    }
-                                    """)
-                    )
-            )
-    })
-    ResponseEntity<LoginResponse> loginBySchool(@Valid @RequestBody SchoolLoginRequest request,
-                                                HttpServletResponse response);
-
-    @SecurityRequirements(value = {})
-    @Operation(summary = "학부모 로그인", description = "이메일로 로그인합니다. Refresh Token은 HttpOnly 쿠키(refreshToken)로 발급됩니다. 연결된 자녀 목록(studentId, 이름)이 포함됩니다.")
+    @Operation(summary = "로그인", description = "이메일로 로그인합니다. Refresh Token은 HttpOnly 쿠키(refreshToken)로 발급됩니다. 학생은 studentId, 학부모는 자녀 목록이 포함됩니다.")
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200", description = "로그인 성공",
