@@ -116,7 +116,7 @@ public interface AuthApiSpecification {
     ResponseEntity<Void> registerStudent(@Valid @RequestBody StudentRegisterRequest request);
 
     @SecurityRequirements(value = {})
-    @Operation(summary = "학부모 회원가입", description = "자녀의 학교와 학번으로 자녀를 확인하고 연결합니다.")
+    @Operation(summary = "학부모 회원가입", description = "자녀의 이메일로 자녀를 확인하고 연결합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "회원가입 성공"),
             @ApiResponse(
@@ -130,7 +130,7 @@ public interface AuthApiSpecification {
                                                 "name": "INVALID_INPUT_VALUE",
                                                 "message": "잘못된 입력입니다.",
                                                 "errors": {
-                                                    "childSchoolNumber": "자녀의 학번을 입력해주세요.",
+                                                    "childEmail": "자녀의 이메일을 입력해주세요.",
                                                     "termsAgreed": "이용약관에 동의해주세요.",
                                                     "privacyAgreed": "개인정보처리방침에 동의해주세요."
                                                 }

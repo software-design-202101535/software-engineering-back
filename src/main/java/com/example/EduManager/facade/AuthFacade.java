@@ -48,11 +48,9 @@ public class AuthFacade {
     @Transactional
     public void registerParent(ParentRegisterRequest request) {
         validatePasswordConfirm(request.getPassword(), request.getPasswordConfirm());
-        School childSchool = EnumConverter.stringToEnum(request.getChildSchool(), School.class, ErrorCode.INVALID_SCHOOL);
         User parent = userService.registerParentUser(
                 request.getEmail(), request.getPassword(), request.getName());
-        User childUser = userService.getStudentBySchoolAndSchoolNumber(
-                childSchool, request.getChildSchoolNumber());
+        User childUser = userService.getStudentByEmail(request.getChildEmail());
         StudentProfile childProfile = studentService.getProfileByUser(childUser);
         studentService.linkParent(parent, childProfile);
     }

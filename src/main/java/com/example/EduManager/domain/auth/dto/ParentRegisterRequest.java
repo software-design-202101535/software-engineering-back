@@ -22,11 +22,9 @@ public class ParentRegisterRequest {
     @NotBlank(message = "이름을 입력해주세요.")
     private String name;
 
-    @NotBlank(message = "자녀의 학교를 선택해주세요.")
-    private String childSchool;
-
-    @NotBlank(message = "자녀의 학번을 입력해주세요.")
-    private String childSchoolNumber;
+    @NotBlank(message = "자녀의 이메일을 입력해주세요.")
+    @Email(message = "올바른 이메일 형식이 아닙니다.")
+    private String childEmail;
 
     @AssertTrue(message = "이용약관에 동의해주세요.")
     private boolean termsAgreed;

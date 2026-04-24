@@ -41,9 +41,13 @@ public class UserService {
                 .orElseThrow(() -> new CustomException(ErrorCode.BAD_CREDENTIALS));
     }
 
-    public User getStudentBySchoolAndSchoolNumber(School school, String schoolNumber) {
-        return userRepository.findBySchoolAndSchoolNumber(school, schoolNumber)
+    public User getStudentByEmail(String email) {
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        if (user.getRole() != Role.STUDENT) {
+            throw new CustomException(ErrorCode.USER_NOT_FOUND);
+        }
+        return user;
     }
 
     public void updateName(User user, String name) {
