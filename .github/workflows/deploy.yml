@@ -31,10 +31,11 @@ jobs:
         run: ./gradlew build
 
       - name: SonarCloud Analysis
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarqube-scan-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
 
       - name: Skip Docker Push on PR
         if: github.event_name == 'pull_request'
