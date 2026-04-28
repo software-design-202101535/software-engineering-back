@@ -41,6 +41,7 @@ public class StudentRegisterRequest {
     @AssertTrue(message = "개인정보처리방침에 동의해주세요.")
     private boolean privacyAgreed;
 
+    @SuppressWarnings("java:S107")
     public static StudentRegisterRequest of(String email, String password, String passwordConfirm,
                                              String name, String school, int grade, int classNum, int number) {
         StudentRegisterRequest request = new StudentRegisterRequest();
