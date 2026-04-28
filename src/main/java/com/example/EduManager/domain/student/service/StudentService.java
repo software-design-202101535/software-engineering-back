@@ -12,6 +12,8 @@ import com.example.EduManager.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 @Service
@@ -57,7 +59,16 @@ public class StudentService {
     }
 
     public void updateDetail(StudentProfile student, UpdateStudentRequest request) {
-        student.updateDetail(request.getBirthDate(), request.getPhone(),
-                request.getParentPhone(), request.getAddress());
+        LocalDate birthDate = parseBirthDate(request.getBirthDate());
+        student.updateDetail(birthDate, request.getPhone(), request.getParentPhone(), request.getAddress());
+    }
+
+    private LocalDate parseBirthDate(String birthDate) {
+        if (birthDate == null) return null;
+        try {
+            return LocalDate.parse(birthDate);
+        } catch (DateTimeParseException e) {
+            throw new CustomException(ErrorCode.INVALID_BIRTH_DATE);
+        }
     }
 }

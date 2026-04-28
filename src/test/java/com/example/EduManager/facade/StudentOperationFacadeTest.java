@@ -23,8 +23,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDate;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -168,7 +166,7 @@ class StudentOperationFacadeTest {
         void homeroomTeacher() {
             UserDetailsImpl teacher = UserDetailsImpl.create(10L, Role.TEACHER);
             UpdateStudentRequest request = UpdateStudentRequest.of("김철수",
-                    LocalDate.of(2008, 1, 1), "010-1234-5678", "010-9876-5432", "서울시");
+                    "2008-01-01", "010-1234-5678", "010-9876-5432", "서울시");
             when(studentService.getById(2L)).thenReturn(student);
             stubStudent();
             stubHomeroomTeacher(10L);
@@ -191,7 +189,7 @@ class StudentOperationFacadeTest {
         void nonHomeroomTeacher() {
             UserDetailsImpl teacher = UserDetailsImpl.create(10L, Role.TEACHER);
             UpdateStudentRequest request = UpdateStudentRequest.of("김철수",
-                    LocalDate.of(2008, 1, 1), "010-1234-5678", "010-9876-5432", "서울시");
+                    "2008-01-01", "010-1234-5678", "010-9876-5432", "서울시");
             when(studentService.getById(2L)).thenReturn(student);
             stubNonHomeroomTeacher(10L);
 
@@ -211,7 +209,7 @@ class StudentOperationFacadeTest {
         void nonTeacherRole(Role role) {
             UserDetailsImpl userDetails = UserDetailsImpl.create(1L, role);
             UpdateStudentRequest request = UpdateStudentRequest.of("김철수",
-                    LocalDate.of(2008, 1, 1), "010-1234-5678", "010-9876-5432", "서울시");
+                    "2008-01-01", "010-1234-5678", "010-9876-5432", "서울시");
             when(studentService.getById(2L)).thenReturn(student);
 
             CustomException ex = assertThrows(CustomException.class,

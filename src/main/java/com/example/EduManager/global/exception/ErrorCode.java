@@ -39,6 +39,7 @@ public enum ErrorCode {
     // 학생
     STUDENT_NOT_FOUND(HttpStatus.NOT_FOUND, 404, "해당 학생을 찾을 수 없습니다."),
     STUDENT_ACCESS_DENIED(HttpStatus.FORBIDDEN, 403, "학생 정보에 접근할 권한이 없습니다."),
+    INVALID_BIRTH_DATE(HttpStatus.BAD_REQUEST, 400, "생년월일 형식이 올바르지 않습니다. (YYYY-MM-DD)"),
 
     // 출결
     ATTENDANCE_NOT_FOUND(HttpStatus.NOT_FOUND, 404, "해당 출결 기록을 찾을 수 없습니다."),
