@@ -81,7 +81,7 @@ public class GradeOperationFacade {
         TeacherProfile teacherProfile = teacherService.getProfileByUserId(teacherUserId);
         boolean isHomeroom = teacherProfile.getGrade() == student.getGrade()
                 && teacherProfile.getClassNum() == student.getClassNum()
-                && teacherProfile.getUser().getSchool() == student.getUser().getSchool();
+                && teacherProfile.getSchool() == student.getSchool();
 
         if (!isHomeroom) {
             throw new CustomException(ErrorCode.GRADE_ACCESS_DENIED);

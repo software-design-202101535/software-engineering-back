@@ -26,9 +26,6 @@ public class TeacherRegisterRequest {
     @NotBlank(message = "학교를 선택해주세요.")
     private String school;
 
-    @NotBlank(message = "사번을 입력해주세요.")
-    private String schoolNumber;
-
     @Min(value = 1, message = "학년을 입력해주세요.")
     private int grade;
 

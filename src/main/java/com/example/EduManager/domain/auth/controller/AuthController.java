@@ -39,14 +39,6 @@ public class AuthController implements AuthApiSpecification {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @PostMapping("/login/school")
-    public ResponseEntity<LoginResponse> loginBySchool(@Valid @RequestBody SchoolLoginRequest request,
-                                                        HttpServletResponse response) {
-        LoginResponse loginResponse = authFacade.loginBySchool(request);
-        setRefreshTokenCookie(response, loginResponse.getRefreshToken());
-        return ResponseEntity.ok(loginResponse);
-    }
-
     @PostMapping("/login/email")
     public ResponseEntity<LoginResponse> loginByEmail(@Valid @RequestBody EmailLoginRequest request,
                                                        HttpServletResponse response) {

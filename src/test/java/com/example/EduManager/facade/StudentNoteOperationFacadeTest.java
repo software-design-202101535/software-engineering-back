@@ -44,7 +44,6 @@ class StudentNoteOperationFacadeTest {
     StudentNoteOperationFacade facade;
 
     @Mock StudentProfile student;
-    @Mock User studentUser;
     @Mock TeacherProfile homeroomTeacher;
     @Mock TeacherProfile nonHomeroomTeacher;
     @Mock User homeroomTeacherUser;
@@ -53,16 +52,14 @@ class StudentNoteOperationFacadeTest {
     private void stubStudent() {
         when(student.getGrade()).thenReturn(2);
         when(student.getClassNum()).thenReturn(3);
-        when(student.getUser()).thenReturn(studentUser);
-        when(studentUser.getSchool()).thenReturn(School.SUNRIN_HIGH_SCHOOL);
+        when(student.getSchool()).thenReturn(School.SUNRIN_HIGH_SCHOOL);
     }
 
     private void stubHomeroomTeacher(Long teacherUserId) {
         when(teacherService.getProfileByUserId(teacherUserId)).thenReturn(homeroomTeacher);
         when(homeroomTeacher.getGrade()).thenReturn(2);
         when(homeroomTeacher.getClassNum()).thenReturn(3);
-        when(homeroomTeacher.getUser()).thenReturn(homeroomTeacherUser);
-        when(homeroomTeacherUser.getSchool()).thenReturn(School.SUNRIN_HIGH_SCHOOL);
+        when(homeroomTeacher.getSchool()).thenReturn(School.SUNRIN_HIGH_SCHOOL);
     }
 
     private void stubNonHomeroomTeacher(Long teacherUserId) {
@@ -145,6 +142,7 @@ class StudentNoteOperationFacadeTest {
             when(studentService.getById(2L)).thenReturn(student);
             stubStudent();
             stubHomeroomTeacher(10L);
+            when(homeroomTeacher.getUser()).thenReturn(homeroomTeacherUser);
             when(studentNoteService.save(student, request, homeroomTeacher)).thenReturn(note);
             when(note.getStudent()).thenReturn(student);
             when(note.getTeacher()).thenReturn(homeroomTeacher);
@@ -191,6 +189,7 @@ class StudentNoteOperationFacadeTest {
             when(studentService.getById(2L)).thenReturn(student);
             stubStudent();
             stubHomeroomTeacher(10L);
+            when(homeroomTeacher.getUser()).thenReturn(homeroomTeacherUser);
             when(student.getId()).thenReturn(2L);
             when(studentNoteService.getByIdAndStudentId(5L, 2L)).thenReturn(note);
             when(studentNoteService.update(note, request)).thenReturn(note);

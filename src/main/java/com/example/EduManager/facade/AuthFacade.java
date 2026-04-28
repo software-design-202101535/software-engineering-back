@@ -30,9 +30,8 @@ public class AuthFacade {
         validatePasswordConfirm(request.getPassword(), request.getPasswordConfirm());
         School school = EnumConverter.stringToEnum(request.getSchool(), School.class, ErrorCode.INVALID_SCHOOL);
         User user = userService.registerSchoolUser(
-                request.getEmail(), request.getPassword(), request.getName(),
-                Role.TEACHER, school, request.getSchoolNumber());
-        teacherService.createProfile(user, request.getGrade(), request.getClassNum());
+                request.getEmail(), request.getPassword(), request.getName(), Role.TEACHER);
+        teacherService.createProfile(user, school, request.getGrade(), request.getClassNum());
     }
 
     @Transactional
@@ -40,19 +39,16 @@ public class AuthFacade {
         validatePasswordConfirm(request.getPassword(), request.getPasswordConfirm());
         School school = EnumConverter.stringToEnum(request.getSchool(), School.class, ErrorCode.INVALID_SCHOOL);
         User user = userService.registerSchoolUser(
-                request.getEmail(), request.getPassword(), request.getName(),
-                Role.STUDENT, school, request.getSchoolNumber());
-        studentService.createProfile(user, request.getGrade(), request.getClassNum(), request.getNumber());
+                request.getEmail(), request.getPassword(), request.getName(), Role.STUDENT);
+        studentService.createProfile(user, school, request.getGrade(), request.getClassNum(), request.getNumber());
     }
 
     @Transactional
     public void registerParent(ParentRegisterRequest request) {
         validatePasswordConfirm(request.getPassword(), request.getPasswordConfirm());
-        School childSchool = EnumConverter.stringToEnum(request.getChildSchool(), School.class, ErrorCode.INVALID_SCHOOL);
         User parent = userService.registerParentUser(
                 request.getEmail(), request.getPassword(), request.getName());
-        User childUser = userService.getStudentBySchoolAndSchoolNumber(
-                childSchool, request.getChildSchoolNumber());
+        User childUser = userService.getStudentByEmail(request.getChildEmail());
         StudentProfile childProfile = studentService.getProfileByUser(childUser);
         studentService.linkParent(parent, childProfile);
     }
@@ -61,13 +57,6 @@ public class AuthFacade {
         if (!password.equals(passwordConfirm)) {
             throw new CustomException(ErrorCode.PASSWORD_MISMATCH);
         }
-    }
-
-    @Transactional
-    public LoginResponse loginBySchool(SchoolLoginRequest request) {
-        School school = EnumConverter.stringToEnum(request.getSchool(), School.class, ErrorCode.INVALID_SCHOOL);
-        User user = userService.getBySchoolAndSchoolNumber(school, request.getSchoolNumber());
-        return buildLoginResponse(user, request.getPassword());
     }
 
     @Transactional

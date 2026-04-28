@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up gradlew executable permission
         run: chmod +x gradlew
@@ -27,6 +29,13 @@ jobs:
 
       - name: Build with Gradle
         run: ./gradlew build
+
+      - name: SonarCloud Analysis
+        uses: SonarSource/sonarqube-scan-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
 
       - name: Skip Docker Push on PR
         if: github.event_name == 'pull_request'

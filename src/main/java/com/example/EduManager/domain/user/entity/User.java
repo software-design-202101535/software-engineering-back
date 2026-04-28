@@ -11,8 +11,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "users",
-        uniqueConstraints = @UniqueConstraint(name = "uq_users_school_school_number", columnNames = {"school", "school_number"}))
+@Table(name = "users")
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -35,13 +34,6 @@ public class User {
     @Column(nullable = false, length = 20)
     private Role role;
 
-    @Enumerated(EnumType.STRING)
-    @Column(length = 50)
-    private School school;
-
-    @Column(name = "school_number", length = 20)
-    private String schoolNumber;
-
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -52,14 +44,12 @@ public class User {
 
     private LocalDateTime deletedAt;
 
-    public static User of(String email, String password, String name, Role role, School school, String schoolNumber) {
+    public static User of(String email, String password, String name, Role role) {
         User user = new User();
         user.email = email;
         user.password = password;
         user.name = name;
         user.role = role;
-        user.school = school;
-        user.schoolNumber = schoolNumber;
         return user;
     }
 

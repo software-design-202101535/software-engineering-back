@@ -32,7 +32,7 @@ public class StudentOperationFacade {
             throw new CustomException(ErrorCode.STUDENT_ACCESS_DENIED);
         }
         TeacherProfile teacher = teacherService.getProfileByUserId(userDetails.getUserId());
-        return toSummaryResponses(studentService.getClassStudents(teacher.getGrade(), teacher.getClassNum(), teacher.getUser().getSchool()));
+        return toSummaryResponses(studentService.getClassStudents(teacher.getGrade(), teacher.getClassNum(), teacher.getSchool()));
     }
 
     @Transactional(readOnly = true)
@@ -59,7 +59,7 @@ public class StudentOperationFacade {
         TeacherProfile teacher = teacherService.getProfileByUserId(teacherUserId);
         boolean isHomeroom = teacher.getGrade() == student.getGrade()
                 && teacher.getClassNum() == student.getClassNum()
-                && teacher.getUser().getSchool() == student.getUser().getSchool();
+                && teacher.getSchool() == student.getSchool();
 
         if (!isHomeroom) throw new CustomException(ErrorCode.STUDENT_ACCESS_DENIED);
     }

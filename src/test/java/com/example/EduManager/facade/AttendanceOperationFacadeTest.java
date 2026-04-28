@@ -46,25 +46,21 @@ class AttendanceOperationFacadeTest {
     AttendanceOperationFacade facade;
 
     @Mock StudentProfile student;
-    @Mock User studentUser;
     @Mock TeacherProfile homeroomTeacher;
     @Mock TeacherProfile nonHomeroomTeacher;
-    @Mock User homeroomTeacherUser;
     @Mock Attendance attendance;
 
     private void stubStudent() {
         when(student.getGrade()).thenReturn(2);
         when(student.getClassNum()).thenReturn(3);
-        when(student.getUser()).thenReturn(studentUser);
-        when(studentUser.getSchool()).thenReturn(School.SUNRIN_HIGH_SCHOOL);
+        when(student.getSchool()).thenReturn(School.SUNRIN_HIGH_SCHOOL);
     }
 
     private void stubHomeroomTeacher(Long teacherUserId) {
         when(teacherService.getProfileByUserId(teacherUserId)).thenReturn(homeroomTeacher);
         when(homeroomTeacher.getGrade()).thenReturn(2);
         when(homeroomTeacher.getClassNum()).thenReturn(3);
-        when(homeroomTeacher.getUser()).thenReturn(homeroomTeacherUser);
-        when(homeroomTeacherUser.getSchool()).thenReturn(School.SUNRIN_HIGH_SCHOOL);
+        when(homeroomTeacher.getSchool()).thenReturn(School.SUNRIN_HIGH_SCHOOL);
     }
 
     private void stubNonHomeroomTeacher(Long teacherUserId) {
