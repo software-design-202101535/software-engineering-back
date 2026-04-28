@@ -23,6 +23,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -65,7 +67,31 @@ class StudentOperationFacadeTest {
     }
 
     @Nested
-    @DisplayName("1. getClassStudents() - 실패")
+    @DisplayName("1. getClassStudents() - 성공")
+    class GetClassStudentsSuccess {
+
+        @Test
+        @DisplayName("TC-1-2. TEACHER → 반 학생 목록 반환")
+        void teacher() {
+            UserDetailsImpl teacher = UserDetailsImpl.create(10L, Role.TEACHER);
+            when(teacherService.getProfileByUserId(10L)).thenReturn(homeroomTeacher);
+            when(homeroomTeacher.getGrade()).thenReturn(2);
+            when(homeroomTeacher.getClassNum()).thenReturn(3);
+            when(homeroomTeacher.getSchool()).thenReturn(School.SUNRIN_HIGH_SCHOOL);
+            when(studentService.getClassStudents(2, 3, School.SUNRIN_HIGH_SCHOOL)).thenReturn(List.of());
+
+            List<?> result = facade.getClassStudents(teacher);
+
+            assertAll(
+                    () -> verify(teacherService).getProfileByUserId(10L),
+                    () -> verify(studentService).getClassStudents(2, 3, School.SUNRIN_HIGH_SCHOOL),
+                    () -> assertNotNull(result)
+            );
+        }
+    }
+
+    @Nested
+    @DisplayName("2. getClassStudents() - 실패")
     class GetClassStudentsFail {
 
         @ParameterizedTest(name = "{0}")
@@ -86,7 +112,7 @@ class StudentOperationFacadeTest {
     }
 
     @Nested
-    @DisplayName("2. getStudentDetail() - 성공")
+    @DisplayName("3. getStudentDetail() - 성공")
     class GetStudentDetailSuccess {
 
         @Test
@@ -124,7 +150,7 @@ class StudentOperationFacadeTest {
     }
 
     @Nested
-    @DisplayName("3. getStudentDetail() - 실패")
+    @DisplayName("4. getStudentDetail() - 실패")
     class GetStudentDetailFail {
 
         @Test
@@ -155,7 +181,7 @@ class StudentOperationFacadeTest {
     }
 
     @Nested
-    @DisplayName("4. updateStudentDetail() - 성공")
+    @DisplayName("5. updateStudentDetail() - 성공")
     class UpdateStudentDetailSuccess {
 
         @Test
@@ -178,7 +204,7 @@ class StudentOperationFacadeTest {
     }
 
     @Nested
-    @DisplayName("5. updateStudentDetail() - 실패")
+    @DisplayName("6. updateStudentDetail() - 실패")
     class UpdateStudentDetailFail {
 
         @Test

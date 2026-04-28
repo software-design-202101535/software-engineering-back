@@ -191,6 +191,27 @@ class GradeOperationFacadeTest {
                     () -> verify(gradeService, never()).getGrades(any(), any(), any())
             );
         }
+
+        @Test
+        @DisplayName("TC-2-5. 반 번호 불일치 TEACHER → GRADE_ACCESS_DENIED")
+        void classMismatchTeacher() {
+            UserDetailsImpl teacher = UserDetailsImpl.create(10L, Role.TEACHER);
+            when(studentService.getById(2L)).thenReturn(student);
+            when(student.getGrade()).thenReturn(2);
+            when(student.getClassNum()).thenReturn(3);
+            TeacherProfile classMismatch = mock(TeacherProfile.class);
+            when(teacherService.getProfileByUserId(10L)).thenReturn(classMismatch);
+            when(classMismatch.getGrade()).thenReturn(2);
+            when(classMismatch.getClassNum()).thenReturn(4);
+
+            CustomException ex = assertThrows(CustomException.class,
+                    () -> facade.getGrades(2L, teacher, "2025-1", ExamType.MIDTERM));
+
+            assertAll(
+                    () -> assertEquals(ErrorCode.GRADE_ACCESS_DENIED, ex.getErrorCode()),
+                    () -> verify(gradeService, never()).getGrades(any(), any(), any())
+            );
+        }
     }
 
     @Nested

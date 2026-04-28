@@ -133,6 +133,27 @@ class AttendanceOperationFacadeTest {
 
             assertEquals(ErrorCode.STUDENT_ACCESS_DENIED, ex.getErrorCode());
         }
+
+        @Test
+        @DisplayName("TC-1-5. 반 번호 불일치 TEACHER → STUDENT_ACCESS_DENIED, findByStudentAndMonth never")
+        void classMismatchTeacher() {
+            UserDetailsImpl teacher = UserDetailsImpl.create(10L, Role.TEACHER);
+            when(studentService.getById(2L)).thenReturn(student);
+            when(student.getGrade()).thenReturn(2);
+            when(student.getClassNum()).thenReturn(3);
+            TeacherProfile classMismatch = mock(TeacherProfile.class);
+            when(teacherService.getProfileByUserId(10L)).thenReturn(classMismatch);
+            when(classMismatch.getGrade()).thenReturn(2);
+            when(classMismatch.getClassNum()).thenReturn(4);
+
+            CustomException ex = assertThrows(CustomException.class,
+                    () -> facade.getList(2L, 2025, 3, teacher));
+
+            assertAll(
+                    () -> assertEquals(ErrorCode.STUDENT_ACCESS_DENIED, ex.getErrorCode()),
+                    () -> verify(attendanceService, never()).findByStudentAndMonth(any(), anyInt(), anyInt())
+            );
+        }
     }
 
     @Nested

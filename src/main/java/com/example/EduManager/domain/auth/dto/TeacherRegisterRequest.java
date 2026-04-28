@@ -37,4 +37,19 @@ public class TeacherRegisterRequest {
 
     @AssertTrue(message = "개인정보처리방침에 동의해주세요.")
     private boolean privacyAgreed;
+
+    public static TeacherRegisterRequest of(String email, String password, String passwordConfirm,
+                                             String name, String school, int grade, int classNum) {
+        TeacherRegisterRequest request = new TeacherRegisterRequest();
+        request.email = email;
+        request.password = password;
+        request.passwordConfirm = passwordConfirm;
+        request.name = name;
+        request.school = school;
+        request.grade = grade;
+        request.classNum = classNum;
+        request.termsAgreed = true;
+        request.privacyAgreed = true;
+        return request;
+    }
 }

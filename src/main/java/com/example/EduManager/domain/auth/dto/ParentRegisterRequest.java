@@ -31,4 +31,17 @@ public class ParentRegisterRequest {
 
     @AssertTrue(message = "개인정보처리방침에 동의해주세요.")
     private boolean privacyAgreed;
+
+    public static ParentRegisterRequest of(String email, String password, String passwordConfirm,
+                                            String name, String childEmail) {
+        ParentRegisterRequest request = new ParentRegisterRequest();
+        request.email = email;
+        request.password = password;
+        request.passwordConfirm = passwordConfirm;
+        request.name = name;
+        request.childEmail = childEmail;
+        request.termsAgreed = true;
+        request.privacyAgreed = true;
+        return request;
+    }
 }
