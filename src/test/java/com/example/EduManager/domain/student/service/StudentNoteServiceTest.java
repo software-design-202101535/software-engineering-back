@@ -1,6 +1,7 @@
 package com.example.EduManager.domain.student.service;
 
 import com.example.EduManager.domain.student.entity.NoteCategory;
+import com.example.EduManager.domain.student.entity.StudentNote;
 import com.example.EduManager.domain.student.repository.StudentNoteRepository;
 import com.example.EduManager.global.exception.CustomException;
 import com.example.EduManager.global.exception.ErrorCode;
@@ -74,6 +75,15 @@ class StudentNoteServiceTest {
                     () -> studentNoteService.getByIdAndStudentId(999L, 1L));
 
             assertEquals(ErrorCode.NOTE_NOT_FOUND, ex.getErrorCode());
+        }
+
+        @Test
+        @DisplayName("TC-2-2. 성공 → StudentNote 반환")
+        void success() {
+            StudentNote note = mock(StudentNote.class);
+            when(studentNoteRepository.findByIdAndStudentId(1L, 1L)).thenReturn(Optional.of(note));
+
+            assertEquals(note, studentNoteService.getByIdAndStudentId(1L, 1L));
         }
     }
 }
