@@ -1,11 +1,16 @@
 package com.example.EduManager.facade;
 
+import com.example.EduManager.domain.auth.dto.AuthTokens;
+import com.example.EduManager.domain.auth.dto.EmailLoginRequest;
+import com.example.EduManager.domain.auth.dto.LoginResponse;
 import com.example.EduManager.domain.auth.dto.ParentRegisterRequest;
+import com.example.EduManager.domain.auth.dto.RefreshResult;
 import com.example.EduManager.domain.auth.dto.StudentRegisterRequest;
 import com.example.EduManager.domain.auth.dto.TeacherRegisterRequest;
 import com.example.EduManager.domain.auth.service.AuthService;
 import com.example.EduManager.domain.student.entity.StudentProfile;
 import com.example.EduManager.domain.student.service.StudentService;
+import com.example.EduManager.domain.teacher.entity.TeacherProfile;
 import com.example.EduManager.domain.teacher.service.TeacherService;
 import com.example.EduManager.domain.user.entity.Role;
 import com.example.EduManager.domain.user.entity.School;
@@ -21,6 +26,8 @@ import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -41,6 +48,8 @@ class AuthFacadeTest {
     @Mock User user;
     @Mock User childUser;
     @Mock StudentProfile childProfile;
+    @Mock AuthTokens tokens;
+    @Mock TeacherProfile teacherProfile;
 
     @Nested
     @DisplayName("1. registerTeacher()")
@@ -180,5 +189,107 @@ class AuthFacadeTest {
             );
         }
 
+    }
+
+    @Nested
+    @DisplayName("4. loginByEmail()")
+    class LoginByEmail {
+
+        private EmailLoginRequest stubRequest() {
+            EmailLoginRequest request = mock(EmailLoginRequest.class);
+            when(request.getEmail()).thenReturn("user@test.com");
+            when(request.getPassword()).thenReturn("pass123!");
+            return request;
+        }
+
+        private void stubAuth(Role role) {
+            when(userService.getByEmail("user@test.com")).thenReturn(user);
+            when(user.getRole()).thenReturn(role);
+            when(authService.authenticate(user, "pass123!")).thenReturn(tokens);
+            when(user.getId()).thenReturn(1L);
+            when(user.getEmail()).thenReturn("user@test.com");
+            when(user.getName()).thenReturn("홍길동");
+            when(tokens.getAccessToken()).thenReturn("access");
+            when(tokens.getRefreshToken()).thenReturn("refresh");
+        }
+
+        @Test
+        @DisplayName("TC-4-1. TEACHER → teacherService.getProfileByUserId 호출, 응답 반환")
+        void teacher() {
+            stubAuth(Role.TEACHER);
+            when(teacherService.getProfileByUserId(1L)).thenReturn(teacherProfile);
+            when(teacherProfile.getGrade()).thenReturn(2);
+            when(teacherProfile.getClassNum()).thenReturn(3);
+
+            LoginResponse response = facade.loginByEmail(stubRequest());
+
+            assertAll(
+                    () -> verify(teacherService).getProfileByUserId(1L),
+                    () -> assertNotNull(response)
+            );
+        }
+
+        @Test
+        @DisplayName("TC-4-2. STUDENT → studentService.getProfileByUser 호출, 응답 반환")
+        void student() {
+            stubAuth(Role.STUDENT);
+            when(studentService.getProfileByUser(user)).thenReturn(childProfile);
+            when(childProfile.getId()).thenReturn(2L);
+
+            LoginResponse response = facade.loginByEmail(stubRequest());
+
+            assertAll(
+                    () -> verify(studentService).getProfileByUser(user),
+                    () -> assertNotNull(response)
+            );
+        }
+
+        @Test
+        @DisplayName("TC-4-3. PARENT → studentService.getProfilesByParent 호출, 응답 반환")
+        void parent() {
+            stubAuth(Role.PARENT);
+            when(studentService.getProfilesByParent(user)).thenReturn(List.of());
+
+            LoginResponse response = facade.loginByEmail(stubRequest());
+
+            assertAll(
+                    () -> verify(studentService).getProfilesByParent(user),
+                    () -> assertNotNull(response)
+            );
+        }
+    }
+
+    @Nested
+    @DisplayName("5. refresh()")
+    class Refresh {
+
+        @Test
+        @DisplayName("TC-5-1. success → authService.refresh 호출, RefreshResult 반환")
+        void success() {
+            RefreshResult result = RefreshResult.of("newAccess", "newRefresh");
+            when(authService.refresh("token")).thenReturn(result);
+
+            assertAll(
+                    () -> assertEquals(result, facade.refresh("token")),
+                    () -> verify(authService).refresh("token")
+            );
+        }
+    }
+
+    @Nested
+    @DisplayName("6. logout()")
+    class Logout {
+
+        @Test
+        @DisplayName("TC-6-1. success → getById → authService.logout 순서")
+        void success() {
+            when(userService.getById(1L)).thenReturn(user);
+
+            facade.logout(1L);
+
+            InOrder inOrder = inOrder(userService, authService);
+            inOrder.verify(userService).getById(1L);
+            inOrder.verify(authService).logout(user);
+        }
     }
 }
