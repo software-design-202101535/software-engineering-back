@@ -111,6 +111,36 @@ class AuthFacadeTest {
             inOrder.verify(studentService).createProfile(user, School.SUNRIN_HIGH_SCHOOL, 2, 3, 5);
         }
 
+        @Test
+        @DisplayName("TC-2-2. 비밀번호 불일치 → PASSWORD_MISMATCH, registerSchoolUser never")
+        void passwordMismatch() {
+            StudentRegisterRequest request = StudentRegisterRequest.of(
+                    "student@test.com", "pass123!", "different!", "김학생", "SUNRIN_HIGH_SCHOOL", 2, 3, 5);
+
+            CustomException ex = assertThrows(CustomException.class,
+                    () -> facade.registerStudent(request));
+
+            assertAll(
+                    () -> assertEquals(ErrorCode.PASSWORD_MISMATCH, ex.getErrorCode()),
+                    () -> verify(userService, never()).registerSchoolUser(any(), any(), any(), any())
+            );
+        }
+
+        @Test
+        @DisplayName("TC-2-3. 잘못된 학교 → INVALID_SCHOOL, registerSchoolUser never")
+        void invalidSchool() {
+            StudentRegisterRequest request = StudentRegisterRequest.of(
+                    "student@test.com", "pass123!", "pass123!", "김학생", "INVALID_SCHOOL", 2, 3, 5);
+
+            CustomException ex = assertThrows(CustomException.class,
+                    () -> facade.registerStudent(request));
+
+            assertAll(
+                    () -> assertEquals(ErrorCode.INVALID_SCHOOL, ex.getErrorCode()),
+                    () -> verify(userService, never()).registerSchoolUser(any(), any(), any(), any())
+            );
+        }
+
     }
 
     @Nested
@@ -133,6 +163,21 @@ class AuthFacadeTest {
             inOrder.verify(userService).getStudentByEmail("student@test.com");
             inOrder.verify(studentService).getProfileByUser(childUser);
             inOrder.verify(studentService).linkParent(user, childProfile);
+        }
+
+        @Test
+        @DisplayName("TC-3-2. 비밀번호 불일치 → PASSWORD_MISMATCH, registerParentUser never")
+        void passwordMismatch() {
+            ParentRegisterRequest request = ParentRegisterRequest.of(
+                    "parent@test.com", "pass123!", "different!", "김부모", "student@test.com");
+
+            CustomException ex = assertThrows(CustomException.class,
+                    () -> facade.registerParent(request));
+
+            assertAll(
+                    () -> assertEquals(ErrorCode.PASSWORD_MISMATCH, ex.getErrorCode()),
+                    () -> verify(userService, never()).registerParentUser(any(), any(), any())
+            );
         }
 
     }
