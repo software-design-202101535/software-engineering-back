@@ -1,5 +1,6 @@
 package com.example.EduManager.domain.feedback.service;
 
+import com.example.EduManager.domain.feedback.entity.Feedback;
 import com.example.EduManager.domain.feedback.repository.FeedbackRepository;
 import com.example.EduManager.global.exception.CustomException;
 import com.example.EduManager.global.exception.ErrorCode;
@@ -39,6 +40,15 @@ class FeedbackServiceTest {
                     () -> feedbackService.getByIdAndStudentId(999L, 1L));
 
             assertEquals(ErrorCode.FEEDBACK_NOT_FOUND, ex.getErrorCode());
+        }
+
+        @Test
+        @DisplayName("TC-1-2. 성공 → Feedback 반환")
+        void success() {
+            Feedback feedback = mock(Feedback.class);
+            when(feedbackRepository.findByIdAndStudentId(1L, 1L)).thenReturn(Optional.of(feedback));
+
+            assertEquals(feedback, feedbackService.getByIdAndStudentId(1L, 1L));
         }
     }
 }
