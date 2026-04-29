@@ -1,5 +1,6 @@
 package com.example.EduManager.domain.attendance.service;
 
+import com.example.EduManager.domain.attendance.entity.Attendance;
 import com.example.EduManager.domain.attendance.repository.AttendanceRepository;
 import com.example.EduManager.global.exception.CustomException;
 import com.example.EduManager.global.exception.ErrorCode;
@@ -39,6 +40,15 @@ class AttendanceServiceTest {
                     () -> attendanceService.getByIdAndStudentId(999L, 1L));
 
             assertEquals(ErrorCode.ATTENDANCE_NOT_FOUND, ex.getErrorCode());
+        }
+
+        @Test
+        @DisplayName("TC-1-2. 성공 → Attendance 반환")
+        void success() {
+            Attendance attendance = mock(Attendance.class);
+            when(attendanceRepository.findByIdAndStudentId(1L, 1L)).thenReturn(Optional.of(attendance));
+
+            assertEquals(attendance, attendanceService.getByIdAndStudentId(1L, 1L));
         }
     }
 }
