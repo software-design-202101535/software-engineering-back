@@ -4,6 +4,7 @@ import com.example.EduManager.domain.student.dto.UpdateStudentRequest;
 import com.example.EduManager.domain.student.entity.StudentProfile;
 import com.example.EduManager.domain.student.repository.ParentStudentRepository;
 import com.example.EduManager.domain.student.repository.StudentProfileRepository;
+import com.example.EduManager.domain.user.entity.User;
 import com.example.EduManager.global.exception.CustomException;
 import com.example.EduManager.global.exception.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
@@ -15,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -67,6 +69,56 @@ class StudentServiceTest {
                     () -> assertEquals(ErrorCode.INVALID_BIRTH_DATE, ex.getErrorCode()),
                     () -> verify(student, never()).updateDetail(any(), any(), any(), any())
             );
+        }
+    }
+
+    @Nested
+    @DisplayName("2. getById()")
+    class GetById {
+
+        @Test
+        @DisplayName("TC-2-1. 성공 → StudentProfile 반환")
+        void success() {
+            when(studentProfileRepository.findById(1L)).thenReturn(Optional.of(student));
+
+            assertEquals(student, studentService.getById(1L));
+        }
+
+        @Test
+        @DisplayName("TC-2-2. 없음 → STUDENT_NOT_FOUND")
+        void notFound() {
+            when(studentProfileRepository.findById(999L)).thenReturn(Optional.empty());
+
+            CustomException ex = assertThrows(CustomException.class,
+                    () -> studentService.getById(999L));
+
+            assertEquals(ErrorCode.STUDENT_NOT_FOUND, ex.getErrorCode());
+        }
+    }
+
+    @Nested
+    @DisplayName("3. getProfileByUser()")
+    class GetProfileByUser {
+
+        @Mock User user;
+
+        @Test
+        @DisplayName("TC-3-1. 성공 → StudentProfile 반환")
+        void success() {
+            when(studentProfileRepository.findByUser(user)).thenReturn(Optional.of(student));
+
+            assertEquals(student, studentService.getProfileByUser(user));
+        }
+
+        @Test
+        @DisplayName("TC-3-2. 없음 → USER_NOT_FOUND")
+        void notFound() {
+            when(studentProfileRepository.findByUser(user)).thenReturn(Optional.empty());
+
+            CustomException ex = assertThrows(CustomException.class,
+                    () -> studentService.getProfileByUser(user));
+
+            assertEquals(ErrorCode.USER_NOT_FOUND, ex.getErrorCode());
         }
     }
 }
