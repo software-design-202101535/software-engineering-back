@@ -32,6 +32,7 @@ class StudentServiceTest {
     StudentService studentService;
 
     @Mock StudentProfile student;
+    @Mock User user;
 
     @Nested
     @DisplayName("1. updateDetail() - parseBirthDate")
@@ -99,8 +100,6 @@ class StudentServiceTest {
     @Nested
     @DisplayName("3. getProfileByUser()")
     class GetProfileByUser {
-
-        @Mock User user;
 
         @Test
         @DisplayName("TC-3-1. 성공 → StudentProfile 반환")
