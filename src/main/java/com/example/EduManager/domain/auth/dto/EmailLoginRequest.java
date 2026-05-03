@@ -13,4 +13,11 @@ public class EmailLoginRequest {
 
     @NotBlank(message = "비밀번호를 입력해주세요.")
     private String password;
+
+    public static EmailLoginRequest of(String email, String password) {
+        EmailLoginRequest request = new EmailLoginRequest();
+        request.email = email;
+        request.password = password;
+        return request;
+    }
 }

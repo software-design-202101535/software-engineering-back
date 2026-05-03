@@ -20,6 +20,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
+import org.mockito.ArgumentCaptor;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -55,9 +57,13 @@ class AuthServiceTest {
 
             AuthTokens result = authService.authenticate(user, "raw");
 
+            ArgumentCaptor<RefreshToken> captor = ArgumentCaptor.forClass(RefreshToken.class);
+            verify(refreshTokenRepository).save(captor.capture());
             assertAll(
-                    () -> verify(refreshTokenRepository).save(any()),
-                    () -> assertNotNull(result)
+                    () -> assertEquals("refresh", captor.getValue().getToken()),
+                    () -> assertEquals(user, captor.getValue().getUser()),
+                    () -> assertEquals("access", result.getAccessToken()),
+                    () -> assertEquals("refresh", result.getRefreshToken())
             );
         }
 
@@ -109,10 +115,14 @@ class AuthServiceTest {
 
             RefreshResult result = authService.refresh("old-refresh");
 
+            ArgumentCaptor<RefreshToken> captor = ArgumentCaptor.forClass(RefreshToken.class);
+            verify(refreshTokenRepository).deleteByUser(user);
+            verify(refreshTokenRepository).save(captor.capture());
             assertAll(
-                    () -> verify(refreshTokenRepository).deleteByUser(user),
-                    () -> verify(refreshTokenRepository).save(any()),
-                    () -> assertNotNull(result)
+                    () -> assertEquals("new-refresh", captor.getValue().getToken()),
+                    () -> assertEquals(user, captor.getValue().getUser()),
+                    () -> assertEquals("new-access", result.getAccessToken()),
+                    () -> assertEquals("new-refresh", result.getRefreshToken())
             );
         }
 

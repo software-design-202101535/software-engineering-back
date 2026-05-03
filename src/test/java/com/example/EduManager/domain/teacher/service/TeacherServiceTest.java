@@ -16,6 +16,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
+import org.mockito.ArgumentCaptor;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -43,8 +45,13 @@ class TeacherServiceTest {
 
             TeacherProfile result = teacherService.createProfile(user, School.SUNRIN_HIGH_SCHOOL, 2, 3);
 
+            ArgumentCaptor<TeacherProfile> captor = ArgumentCaptor.forClass(TeacherProfile.class);
+            verify(teacherProfileRepository).save(captor.capture());
             assertAll(
-                    () -> verify(teacherProfileRepository).save(any()),
+                    () -> assertEquals(user, captor.getValue().getUser()),
+                    () -> assertEquals(School.SUNRIN_HIGH_SCHOOL, captor.getValue().getSchool()),
+                    () -> assertEquals(2, captor.getValue().getGrade()),
+                    () -> assertEquals(3, captor.getValue().getClassNum()),
                     () -> assertEquals(profile, result)
             );
         }

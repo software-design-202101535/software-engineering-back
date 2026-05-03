@@ -196,10 +196,7 @@ class AuthFacadeTest {
     class LoginByEmail {
 
         private EmailLoginRequest stubRequest() {
-            EmailLoginRequest request = mock(EmailLoginRequest.class);
-            when(request.getEmail()).thenReturn("user@test.com");
-            when(request.getPassword()).thenReturn("pass123!");
-            return request;
+            return EmailLoginRequest.of("user@test.com", "pass123!");
         }
 
         private void stubAuth(Role role) {
@@ -223,9 +220,15 @@ class AuthFacadeTest {
 
             LoginResponse response = facade.loginByEmail(stubRequest());
 
+            verify(teacherService).getProfileByUserId(1L);
             assertAll(
-                    () -> verify(teacherService).getProfileByUserId(1L),
-                    () -> assertNotNull(response)
+                    () -> assertEquals("access", response.getAccessToken()),
+                    () -> assertEquals(1L, response.getUserId()),
+                    () -> assertEquals("user@test.com", response.getEmail()),
+                    () -> assertEquals("홍길동", response.getName()),
+                    () -> assertEquals("TEACHER", response.getRole()),
+                    () -> assertEquals(2, response.getGrade()),
+                    () -> assertEquals(3, response.getClassNum())
             );
         }
 
@@ -238,9 +241,12 @@ class AuthFacadeTest {
 
             LoginResponse response = facade.loginByEmail(stubRequest());
 
+            verify(studentService).getProfileByUser(user);
             assertAll(
-                    () -> verify(studentService).getProfileByUser(user),
-                    () -> assertNotNull(response)
+                    () -> assertEquals("access", response.getAccessToken()),
+                    () -> assertEquals(1L, response.getUserId()),
+                    () -> assertEquals("STUDENT", response.getRole()),
+                    () -> assertEquals(2L, response.getStudentId())
             );
         }
 
@@ -252,9 +258,11 @@ class AuthFacadeTest {
 
             LoginResponse response = facade.loginByEmail(stubRequest());
 
+            verify(studentService).getProfilesByParent(user);
             assertAll(
-                    () -> verify(studentService).getProfilesByParent(user),
-                    () -> assertNotNull(response)
+                    () -> assertEquals("access", response.getAccessToken()),
+                    () -> assertEquals(1L, response.getUserId()),
+                    () -> assertEquals("PARENT", response.getRole())
             );
         }
     }

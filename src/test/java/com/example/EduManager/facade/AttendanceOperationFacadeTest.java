@@ -78,7 +78,7 @@ class AttendanceOperationFacadeTest {
         void admin() {
             UserDetailsImpl admin = UserDetailsImpl.create(1L, Role.ADMIN);
             when(studentService.getById(2L)).thenReturn(student);
-            when(attendanceService.findByStudentAndMonth(any(), anyInt(), anyInt())).thenReturn(List.of());
+            when(attendanceService.findByStudentAndMonth(any(), eq(2025), eq(3))).thenReturn(List.of());
 
             List<?> result = facade.getList(2L, 2025, 3, admin);
 
@@ -95,7 +95,7 @@ class AttendanceOperationFacadeTest {
             when(studentService.getById(2L)).thenReturn(student);
             stubStudent();
             stubHomeroomTeacher(10L);
-            when(attendanceService.findByStudentAndMonth(any(), anyInt(), anyInt())).thenReturn(List.of());
+            when(attendanceService.findByStudentAndMonth(any(), eq(2025), eq(3))).thenReturn(List.of());
 
             List<?> result = facade.getList(2L, 2025, 3, teacher);
 

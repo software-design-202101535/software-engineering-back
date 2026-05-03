@@ -18,6 +18,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
+import org.mockito.ArgumentCaptor;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -47,8 +49,13 @@ class UserServiceTest {
 
             User result = userService.registerSchoolUser("a@test.com", "pass", "홍길동", Role.TEACHER);
 
+            ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+            verify(userRepository).save(captor.capture());
             assertAll(
-                    () -> verify(userRepository).save(any()),
+                    () -> assertEquals("a@test.com", captor.getValue().getEmail()),
+                    () -> assertEquals("홍길동", captor.getValue().getName()),
+                    () -> assertEquals(Role.TEACHER, captor.getValue().getRole()),
+                    () -> assertEquals("encoded", captor.getValue().getPassword()),
                     () -> assertEquals(user, result)
             );
         }
@@ -81,8 +88,13 @@ class UserServiceTest {
 
             User result = userService.registerParentUser("p@test.com", "pass", "김부모");
 
+            ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+            verify(userRepository).save(captor.capture());
             assertAll(
-                    () -> verify(userRepository).save(any()),
+                    () -> assertEquals("p@test.com", captor.getValue().getEmail()),
+                    () -> assertEquals("김부모", captor.getValue().getName()),
+                    () -> assertEquals(Role.PARENT, captor.getValue().getRole()),
+                    () -> assertEquals("encoded", captor.getValue().getPassword()),
                     () -> assertEquals(user, result)
             );
         }
