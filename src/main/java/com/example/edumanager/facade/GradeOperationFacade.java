@@ -9,7 +9,6 @@ import com.example.edumanager.domain.student.entity.StudentProfile;
 import com.example.edumanager.domain.student.service.StudentService;
 import com.example.edumanager.domain.teacher.entity.TeacherProfile;
 import com.example.edumanager.domain.teacher.service.TeacherService;
-import com.example.edumanager.domain.user.entity.Role;
 import com.example.edumanager.domain.user.entity.User;
 import com.example.edumanager.global.exception.CustomException;
 import com.example.edumanager.global.exception.ErrorCode;
@@ -42,20 +41,17 @@ public class GradeOperationFacade {
     public List<GradeResponse> batchProcess(Long studentId, UserDetailsImpl userDetails,
                                             BatchGradeRequest request) {
         StudentProfile student = studentService.getById(studentId);
-        checkWriteAccess(userDetails.getUserId(), student, userDetails.getRole());
+        checkHomeroomAccess(userDetails.getUserId(), student);
         List<Grade> grades = gradeService.batchProcess(student, request);
         return grades.stream().map(GradeResponse::of).toList();
     }
 
     private void checkReadAccess(StudentProfile student, UserDetailsImpl userDetails) {
-        Role role = userDetails.getRole();
-
-        if (role == Role.ADMIN) return;
-        if (role == Role.TEACHER) { checkHomeroomAccess(userDetails.getUserId(), student); return; }
-        if (role == Role.STUDENT) { checkStudentAccess(userDetails.getUserId(), student); return; }
-        if (role == Role.PARENT)  { checkParentAccess(userDetails.getUserId(), student); return; }
-
-        throw new CustomException(ErrorCode.GRADE_ACCESS_DENIED);
+        switch (userDetails.getRole()) {
+            case TEACHER -> checkHomeroomAccess(userDetails.getUserId(), student);
+            case STUDENT -> checkStudentAccess(userDetails.getUserId(), student);
+            case PARENT  -> checkParentAccess(userDetails.getUserId(), student);
+        }
     }
 
     private void checkStudentAccess(Long userId, StudentProfile student) {
@@ -70,11 +66,6 @@ public class GradeOperationFacade {
         if (!isLinked) {
             throw new CustomException(ErrorCode.GRADE_ACCESS_DENIED);
         }
-    }
-
-    private void checkWriteAccess(Long teacherUserId, StudentProfile student, Role role) {
-        if (role == Role.ADMIN) return;
-        checkHomeroomAccess(teacherUserId, student);
     }
 
     private void checkHomeroomAccess(Long teacherUserId, StudentProfile student) {

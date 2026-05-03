@@ -141,6 +141,40 @@ class FeedbackOperationFacadeTest {
         }
 
         @Test
+        @DisplayName("TC-1-5-1. STUDENT(본인), category=GRADE → findStudentVisibleByCategory 호출")
+        void studentSelfWithCategory() {
+            UserDetailsImpl student = UserDetailsImpl.create(5L, Role.STUDENT);
+            when(userService.getById(5L)).thenReturn(teacherUser);
+            when(studentService.getProfileByUser(teacherUser)).thenReturn(studentProfile);
+            when(studentProfile.getId()).thenReturn(2L);
+            when(feedbackService.findStudentVisibleByCategory(2L, FeedbackCategory.GRADE)).thenReturn(List.of());
+
+            facade.getList(2L, FeedbackCategory.GRADE, student);
+
+            assertAll(
+                    () -> verify(feedbackService).findStudentVisibleByCategory(2L, FeedbackCategory.GRADE),
+                    () -> verify(feedbackService, never()).findStudentVisible(any())
+            );
+        }
+
+        @Test
+        @DisplayName("TC-1-5-2. PARENT(연결됨), category=GRADE → findParentVisibleByCategory 호출")
+        void parentLinkedWithCategory() {
+            UserDetailsImpl parent = UserDetailsImpl.create(7L, Role.PARENT);
+            User parentUser = mock(User.class);
+            when(parentUser.getId()).thenReturn(7L);
+            when(studentService.getParentsByStudentId(2L)).thenReturn(List.of(parentUser));
+            when(feedbackService.findParentVisibleByCategory(2L, FeedbackCategory.GRADE)).thenReturn(List.of());
+
+            facade.getList(2L, FeedbackCategory.GRADE, parent);
+
+            assertAll(
+                    () -> verify(feedbackService).findParentVisibleByCategory(2L, FeedbackCategory.GRADE),
+                    () -> verify(feedbackService, never()).findParentVisible(any())
+            );
+        }
+
+        @Test
         @DisplayName("TC-1-6. PARENT(비연결) → STUDENT_ACCESS_DENIED, findParentVisible never")
         void parentNotLinked() {
             UserDetailsImpl parent = UserDetailsImpl.create(7L, Role.PARENT);

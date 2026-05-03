@@ -36,7 +36,7 @@ public class FeedbackOperationFacade {
     public List<FeedbackResponse> getList(Long studentId, FeedbackCategory category, UserDetailsImpl userDetails) {
         studentService.getById(studentId);
         List<Feedback> feedbacks = switch (userDetails.getRole()) {
-            case TEACHER, ADMIN -> fetchAllFeedbacks(studentId, category);
+            case TEACHER -> fetchAllFeedbacks(studentId, category);
             case STUDENT -> fetchStudentFeedbacks(userDetails.getUserId(), studentId, category);
             case PARENT -> fetchParentFeedbacks(userDetails.getUserId(), studentId, category);
         };
@@ -45,7 +45,7 @@ public class FeedbackOperationFacade {
 
     @Transactional
     public FeedbackResponse create(Long studentId, CreateFeedbackRequest request, UserDetailsImpl userDetails) {
-        checkTeacherOrAdmin(userDetails.getRole());
+        checkTeacher(userDetails.getRole());
         StudentProfile student = studentService.getById(studentId);
         TeacherProfile teacher = teacherService.getProfileByUserId(userDetails.getUserId());
         return FeedbackResponse.of(feedbackService.save(student, teacher, request));
@@ -53,7 +53,7 @@ public class FeedbackOperationFacade {
 
     @Transactional
     public FeedbackResponse update(Long studentId, Long feedbackId, UpdateFeedbackRequest request, UserDetailsImpl userDetails) {
-        checkTeacherOrAdmin(userDetails.getRole());
+        checkTeacher(userDetails.getRole());
         studentService.getById(studentId);
         Feedback feedback = feedbackService.getByIdAndStudentId(feedbackId, studentId);
         checkAuthor(feedback, userDetails);
@@ -62,7 +62,7 @@ public class FeedbackOperationFacade {
 
     @Transactional
     public FeedbackResponse updateVisibility(Long studentId, Long feedbackId, UpdateFeedbackVisibilityRequest request, UserDetailsImpl userDetails) {
-        checkTeacherOrAdmin(userDetails.getRole());
+        checkTeacher(userDetails.getRole());
         studentService.getById(studentId);
         Feedback feedback = feedbackService.getByIdAndStudentId(feedbackId, studentId);
         checkAuthor(feedback, userDetails);
@@ -71,7 +71,7 @@ public class FeedbackOperationFacade {
 
     @Transactional
     public void delete(Long studentId, Long feedbackId, UserDetailsImpl userDetails) {
-        checkTeacherOrAdmin(userDetails.getRole());
+        checkTeacher(userDetails.getRole());
         studentService.getById(studentId);
         Feedback feedback = feedbackService.getByIdAndStudentId(feedbackId, studentId);
         checkAuthor(feedback, userDetails);
@@ -112,14 +112,13 @@ public class FeedbackOperationFacade {
         if (!isLinked) throw new CustomException(ErrorCode.STUDENT_ACCESS_DENIED);
     }
 
-    private void checkTeacherOrAdmin(Role role) {
-        if (role != Role.TEACHER && role != Role.ADMIN) {
+    private void checkTeacher(Role role) {
+        if (role != Role.TEACHER) {
             throw new CustomException(ErrorCode.STUDENT_ACCESS_DENIED);
         }
     }
 
     private void checkAuthor(Feedback feedback, UserDetailsImpl userDetails) {
-        if (userDetails.getRole() == Role.ADMIN) return;
         if (!feedback.getTeacher().getUser().getId().equals(userDetails.getUserId())) {
             throw new CustomException(ErrorCode.FEEDBACK_ACCESS_DENIED);
         }

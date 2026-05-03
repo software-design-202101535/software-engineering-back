@@ -63,7 +63,6 @@ public class AttendanceOperationFacade {
     }
 
     private void checkHomeroomAccess(Long teacherUserId, StudentProfile student, Role role) {
-        if (role == Role.ADMIN) return;
         if (role != Role.TEACHER) throw new CustomException(ErrorCode.STUDENT_ACCESS_DENIED);
 
         TeacherProfile teacher = teacherService.getProfileByUserId(teacherUserId);

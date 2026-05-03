@@ -26,7 +26,7 @@ import java.util.List;
 @Tag(name = "피드백 API", description = "학생 피드백 조회 및 관리")
 public interface FeedbackApiSpecification {
 
-    @Operation(summary = "피드백 목록 조회", description = "역할에 따라 필터링된 피드백 목록을 반환합니다. TEACHER/ADMIN은 전체, STUDENT는 studentVisible, PARENT는 parentVisible 피드백만 반환됩니다.")
+    @Operation(summary = "피드백 목록 조회", description = "역할에 따라 필터링된 피드백 목록을 반환합니다. TEACHER는 전체, STUDENT는 studentVisible, PARENT는 parentVisible 피드백만 반환됩니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공",
                     content = @Content(schema = @Schema(implementation = FeedbackResponse.class),
@@ -60,7 +60,7 @@ public interface FeedbackApiSpecification {
             @RequestParam(required = false) FeedbackCategory category,
             @AuthenticationPrincipal UserDetailsImpl userDetails);
 
-    @Operation(summary = "피드백 작성", description = "학생에게 피드백을 작성합니다. TEACHER/ADMIN만 호출 가능합니다.")
+    @Operation(summary = "피드백 작성", description = "학생에게 피드백을 작성합니다. TEACHER만 호출 가능합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "작성 성공",
                     content = @Content(schema = @Schema(implementation = FeedbackResponse.class),
@@ -81,7 +81,7 @@ public interface FeedbackApiSpecification {
                             examples = @ExampleObject("""
                                     {"code": 400, "name": "INVALID_INPUT_VALUE", "message": "잘못된 입력입니다.", "errors": {"category": "카테고리를 입력해주세요."}}
                                     """))),
-            @ApiResponse(responseCode = "403", description = "TEACHER/ADMIN이 아닌 경우",
+            @ApiResponse(responseCode = "403", description = "TEACHER가 아닌 경우",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                             examples = @ExampleObject("""
                                     {"code": 403, "name": "STUDENT_ACCESS_DENIED", "message": "학생 정보에 접근할 권한이 없습니다."}

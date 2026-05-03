@@ -187,7 +187,7 @@ class UserServiceTest {
         }
 
         @ParameterizedTest(name = "{0}")
-        @EnumSource(value = Role.class, names = {"TEACHER", "PARENT", "ADMIN"})
+        @EnumSource(value = Role.class, names = {"TEACHER", "PARENT"})
         @DisplayName("TC-5-3. STUDENT 아닌 Role → USER_NOT_FOUND")
         void nonStudentRole(Role role) {
             when(userRepository.findByEmail("s@test.com")).thenReturn(Optional.of(user));

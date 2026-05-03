@@ -82,7 +82,7 @@ public interface StudentApiSpecification {
             summary = "학생 상세 조회",
             description = """
                     학생의 기본 정보(이름, 학년, 반, 번호, 생년월일, 연락처, 주소)를 반환합니다.
-                    담임교사 또는 ADMIN만 호출 가능합니다.
+                    담임교사만 호출 가능합니다.
                     """
     )
     @ApiResponses({
@@ -141,7 +141,7 @@ public interface StudentApiSpecification {
             description = """
                     학생의 이름, 생년월일, 연락처, 주소를 수정합니다.
                     학년·반·번호는 수정할 수 없습니다 (학적 변경은 별도 프로세스).
-                    담임교사 또는 ADMIN만 호출 가능합니다.
+                    담임교사만 호출 가능합니다.
                     """
     )
     @ApiResponses({

@@ -73,19 +73,7 @@ class StudentNoteOperationFacadeTest {
     class GetList {
 
         @Test
-        @DisplayName("TC-1-1. ADMIN")
-        void admin() {
-            UserDetailsImpl admin = UserDetailsImpl.create(1L, Role.ADMIN);
-            when(studentService.getById(2L)).thenReturn(student);
-            when(studentNoteService.findByStudentAndCategory(2L, null)).thenReturn(List.of());
-
-            facade.getList(2L, null, admin);
-
-            verify(studentNoteService).findByStudentAndCategory(2L, null);
-        }
-
-        @Test
-        @DisplayName("TC-1-2. 담임 TEACHER")
+        @DisplayName("TC-1-1. 담임 TEACHER")
         void homeroomTeacher() {
             UserDetailsImpl teacher = UserDetailsImpl.create(10L, Role.TEACHER);
             when(studentService.getById(2L)).thenReturn(student);
@@ -138,6 +126,29 @@ class StudentNoteOperationFacadeTest {
             when(teacherService.getProfileByUserId(10L)).thenReturn(classMismatch);
             when(classMismatch.getGrade()).thenReturn(2);
             when(classMismatch.getClassNum()).thenReturn(4);
+
+            CustomException ex = assertThrows(CustomException.class,
+                    () -> facade.getList(2L, null, teacher));
+
+            assertAll(
+                    () -> assertEquals(ErrorCode.STUDENT_ACCESS_DENIED, ex.getErrorCode()),
+                    () -> verify(studentNoteService, never()).findByStudentAndCategory(any(), any())
+            );
+        }
+
+        @Test
+        @DisplayName("TC-1-6. 학교 불일치 TEACHER → STUDENT_ACCESS_DENIED, findByStudentAndCategory never")
+        void schoolMismatchTeacher() {
+            UserDetailsImpl teacher = UserDetailsImpl.create(10L, Role.TEACHER);
+            when(studentService.getById(2L)).thenReturn(student);
+            when(student.getGrade()).thenReturn(2);
+            when(student.getClassNum()).thenReturn(3);
+            when(student.getSchool()).thenReturn(School.SUNRIN_HIGH_SCHOOL);
+            TeacherProfile schoolMismatch = mock(TeacherProfile.class);
+            when(teacherService.getProfileByUserId(10L)).thenReturn(schoolMismatch);
+            when(schoolMismatch.getGrade()).thenReturn(2);
+            when(schoolMismatch.getClassNum()).thenReturn(3);
+            when(schoolMismatch.getSchool()).thenReturn(School.SEOUL_HIGH_SCHOOL);
 
             CustomException ex = assertThrows(CustomException.class,
                     () -> facade.getList(2L, null, teacher));

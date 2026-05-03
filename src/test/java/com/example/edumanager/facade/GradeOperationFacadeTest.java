@@ -67,19 +67,7 @@ class GradeOperationFacadeTest {
     class GetGradesSuccess {
 
         @Test
-        @DisplayName("TC-1-1. ADMIN")
-        void admin() {
-            UserDetailsImpl admin = UserDetailsImpl.create(1L, Role.ADMIN);
-            when(studentService.getById(2L)).thenReturn(student);
-            when(gradeService.getGrades(student, "2025-1", ExamType.MIDTERM)).thenReturn(List.of());
-
-            facade.getGrades(2L, admin, "2025-1", ExamType.MIDTERM);
-
-            verify(gradeService).getGrades(student, "2025-1", ExamType.MIDTERM);
-        }
-
-        @Test
-        @DisplayName("TC-1-2. 담임 교사")
+        @DisplayName("TC-1-1. 담임 교사")
         void homeroomTeacher() {
             UserDetailsImpl teacher = UserDetailsImpl.create(10L, Role.TEACHER);
             when(studentService.getById(2L)).thenReturn(student);
@@ -180,11 +168,11 @@ class GradeOperationFacadeTest {
         @Test
         @DisplayName("TC-2-4. 존재하지 않는 학생 → STUDENT_NOT_FOUND")
         void studentNotFound() {
-            UserDetailsImpl admin = UserDetailsImpl.create(1L, Role.ADMIN);
+            UserDetailsImpl teacher = UserDetailsImpl.create(10L, Role.TEACHER);
             when(studentService.getById(999L)).thenThrow(new CustomException(ErrorCode.STUDENT_NOT_FOUND));
 
             CustomException ex = assertThrows(CustomException.class,
-                    () -> facade.getGrades(999L, admin, "2025-1", ExamType.MIDTERM));
+                    () -> facade.getGrades(999L, teacher, "2025-1", ExamType.MIDTERM));
 
             assertAll(
                     () -> assertEquals(ErrorCode.STUDENT_NOT_FOUND, ex.getErrorCode()),
@@ -212,6 +200,29 @@ class GradeOperationFacadeTest {
                     () -> verify(gradeService, never()).getGrades(any(), any(), any())
             );
         }
+
+        @Test
+        @DisplayName("TC-2-6. 학교 불일치 TEACHER → GRADE_ACCESS_DENIED")
+        void schoolMismatchTeacher() {
+            UserDetailsImpl teacher = UserDetailsImpl.create(10L, Role.TEACHER);
+            when(studentService.getById(2L)).thenReturn(student);
+            when(student.getGrade()).thenReturn(2);
+            when(student.getClassNum()).thenReturn(3);
+            when(student.getSchool()).thenReturn(School.SUNRIN_HIGH_SCHOOL);
+            TeacherProfile schoolMismatch = mock(TeacherProfile.class);
+            when(teacherService.getProfileByUserId(10L)).thenReturn(schoolMismatch);
+            when(schoolMismatch.getGrade()).thenReturn(2);
+            when(schoolMismatch.getClassNum()).thenReturn(3);
+            when(schoolMismatch.getSchool()).thenReturn(School.SEOUL_HIGH_SCHOOL);
+
+            CustomException ex = assertThrows(CustomException.class,
+                    () -> facade.getGrades(2L, teacher, "2025-1", ExamType.MIDTERM));
+
+            assertAll(
+                    () -> assertEquals(ErrorCode.GRADE_ACCESS_DENIED, ex.getErrorCode()),
+                    () -> verify(gradeService, never()).getGrades(any(), any(), any())
+            );
+        }
     }
 
     @Nested
@@ -222,19 +233,7 @@ class GradeOperationFacadeTest {
                 "2025-1", ExamType.MIDTERM, List.of(), List.of(), List.of());
 
         @Test
-        @DisplayName("TC-3-1. ADMIN")
-        void admin() {
-            UserDetailsImpl admin = UserDetailsImpl.create(1L, Role.ADMIN);
-            when(studentService.getById(2L)).thenReturn(student);
-            when(gradeService.batchProcess(student, request)).thenReturn(List.of());
-
-            facade.batchProcess(2L, admin, request);
-
-            verify(gradeService).batchProcess(student, request);
-        }
-
-        @Test
-        @DisplayName("TC-3-2. 담임 교사")
+        @DisplayName("TC-3-1. 담임 교사")
         void homeroomTeacher() {
             UserDetailsImpl teacher = UserDetailsImpl.create(10L, Role.TEACHER);
             when(studentService.getById(2L)).thenReturn(student);
@@ -274,11 +273,11 @@ class GradeOperationFacadeTest {
         @Test
         @DisplayName("TC-4-2. 존재하지 않는 학생 → STUDENT_NOT_FOUND")
         void studentNotFound() {
-            UserDetailsImpl admin = UserDetailsImpl.create(1L, Role.ADMIN);
+            UserDetailsImpl teacher = UserDetailsImpl.create(10L, Role.TEACHER);
             when(studentService.getById(999L)).thenThrow(new CustomException(ErrorCode.STUDENT_NOT_FOUND));
 
             CustomException ex = assertThrows(CustomException.class,
-                    () -> facade.batchProcess(999L, admin, request));
+                    () -> facade.batchProcess(999L, teacher, request));
 
             assertAll(
                     () -> assertEquals(ErrorCode.STUDENT_NOT_FOUND, ex.getErrorCode()),

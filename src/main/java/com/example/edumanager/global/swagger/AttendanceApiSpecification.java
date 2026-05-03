@@ -24,7 +24,7 @@ import java.util.List;
 @Tag(name = "출결 API", description = "학생 출결 기록 조회 및 관리")
 public interface AttendanceApiSpecification {
 
-    @Operation(summary = "출결 목록 조회", description = "특정 학생의 연월별 출결 목록을 반환합니다. 담임교사 또는 ADMIN만 호출 가능합니다.")
+    @Operation(summary = "출결 목록 조회", description = "특정 학생의 연월별 출결 목록을 반환합니다. 담임교사만 호출 가능합니다.")
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200", description = "조회 성공",
@@ -60,7 +60,7 @@ public interface AttendanceApiSpecification {
             @RequestParam int month,
             @AuthenticationPrincipal UserDetailsImpl userDetails);
 
-    @Operation(summary = "출결 기록 추가", description = "특정 학생의 출결을 기록합니다. 담임교사 또는 ADMIN만 호출 가능합니다.")
+    @Operation(summary = "출결 기록 추가", description = "특정 학생의 출결을 기록합니다. 담임교사만 호출 가능합니다.")
     @ApiResponses({
             @ApiResponse(
                     responseCode = "201", description = "기록 성공",
@@ -103,7 +103,7 @@ public interface AttendanceApiSpecification {
             @RequestBody @Valid CreateAttendanceRequest request,
             @AuthenticationPrincipal UserDetailsImpl userDetails);
 
-    @Operation(summary = "출결 수정", description = "출결 기록의 날짜, 상태, 사유를 수정합니다. 담임교사 또는 ADMIN만 호출 가능합니다.")
+    @Operation(summary = "출결 수정", description = "출결 기록의 날짜, 상태, 사유를 수정합니다. 담임교사만 호출 가능합니다.")
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200", description = "수정 성공",
@@ -137,7 +137,7 @@ public interface AttendanceApiSpecification {
             @RequestBody @Valid UpdateAttendanceRequest request,
             @AuthenticationPrincipal UserDetailsImpl userDetails);
 
-    @Operation(summary = "출결 삭제", description = "출결 기록을 삭제합니다. 담임교사 또는 ADMIN만 호출 가능합니다.")
+    @Operation(summary = "출결 삭제", description = "출결 기록을 삭제합니다. 담임교사만 호출 가능합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "삭제 성공"),
             @ApiResponse(responseCode = "403", description = "담임교사가 아닌 경우",

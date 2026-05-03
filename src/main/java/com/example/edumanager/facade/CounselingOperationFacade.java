@@ -30,7 +30,7 @@ public class CounselingOperationFacade {
 
     @Transactional(readOnly = true)
     public List<CounselingResponse> getList(Long studentId, int year, Integer month, UserDetailsImpl userDetails) {
-        checkTeacherOrAdmin(userDetails.getRole());
+        checkTeacher(userDetails.getRole());
         studentService.getById(studentId);
         return fetchCounselings(studentId, userDetails.getUserId(), year, month).stream()
                 .map(CounselingResponse::of).toList();
@@ -38,7 +38,7 @@ public class CounselingOperationFacade {
 
     @Transactional
     public CounselingResponse create(Long studentId, CreateCounselingRequest request, UserDetailsImpl userDetails) {
-        checkTeacherOrAdmin(userDetails.getRole());
+        checkTeacher(userDetails.getRole());
         StudentProfile student = studentService.getById(studentId);
         TeacherProfile teacher = teacherService.getProfileByUserId(userDetails.getUserId());
         return CounselingResponse.of(counselingService.save(student, teacher, request));
@@ -46,7 +46,7 @@ public class CounselingOperationFacade {
 
     @Transactional
     public CounselingResponse update(Long studentId, Long counselingId, UpdateCounselingRequest request, UserDetailsImpl userDetails) {
-        checkTeacherOrAdmin(userDetails.getRole());
+        checkTeacher(userDetails.getRole());
         studentService.getById(studentId);
         Counseling counseling = counselingService.getByIdAndStudentId(counselingId, studentId);
         checkAuthor(counseling, userDetails);
@@ -55,7 +55,7 @@ public class CounselingOperationFacade {
 
     @Transactional
     public CounselingResponse updateShare(Long studentId, Long counselingId, UpdateCounselingShareRequest request, UserDetailsImpl userDetails) {
-        checkTeacherOrAdmin(userDetails.getRole());
+        checkTeacher(userDetails.getRole());
         studentService.getById(studentId);
         Counseling counseling = counselingService.getByIdAndStudentId(counselingId, studentId);
         checkAuthor(counseling, userDetails);
@@ -64,7 +64,7 @@ public class CounselingOperationFacade {
 
     @Transactional
     public void delete(Long studentId, Long counselingId, UserDetailsImpl userDetails) {
-        checkTeacherOrAdmin(userDetails.getRole());
+        checkTeacher(userDetails.getRole());
         studentService.getById(studentId);
         Counseling counseling = counselingService.getByIdAndStudentId(counselingId, studentId);
         checkAuthor(counseling, userDetails);
@@ -77,14 +77,13 @@ public class CounselingOperationFacade {
                 : counselingService.findForTeacherByYearAndMonth(studentId, teacherId, year, month);
     }
 
-    private void checkTeacherOrAdmin(Role role) {
-        if (role != Role.TEACHER && role != Role.ADMIN) {
+    private void checkTeacher(Role role) {
+        if (role != Role.TEACHER) {
             throw new CustomException(ErrorCode.STUDENT_ACCESS_DENIED);
         }
     }
 
     private void checkAuthor(Counseling counseling, UserDetailsImpl userDetails) {
-        if (userDetails.getRole() == Role.ADMIN) return;
         if (!counseling.getTeacher().getUser().getId().equals(userDetails.getUserId())) {
             throw new CustomException(ErrorCode.COUNSELING_ACCESS_DENIED);
         }

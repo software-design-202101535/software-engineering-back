@@ -1,8 +1,12 @@
 package com.example.edumanager.domain.student.service;
 
+import com.example.edumanager.domain.student.dto.CreateNoteRequest;
+import com.example.edumanager.domain.student.dto.UpdateNoteRequest;
 import com.example.edumanager.domain.student.entity.NoteCategory;
 import com.example.edumanager.domain.student.entity.StudentNote;
+import com.example.edumanager.domain.student.entity.StudentProfile;
 import com.example.edumanager.domain.student.repository.StudentNoteRepository;
+import com.example.edumanager.domain.teacher.entity.TeacherProfile;
 import com.example.edumanager.global.exception.CustomException;
 import com.example.edumanager.global.exception.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
@@ -13,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -84,6 +89,64 @@ class StudentNoteServiceTest {
             when(studentNoteRepository.findByIdAndStudentId(1L, 1L)).thenReturn(Optional.of(note));
 
             assertEquals(note, studentNoteService.getByIdAndStudentId(1L, 1L));
+        }
+    }
+
+    @Nested
+    @DisplayName("3. save()")
+    class Save {
+
+        @Test
+        @DisplayName("TC-3-1. repository.save 호출, 결과 반환")
+        void success() {
+            StudentProfile student = mock(StudentProfile.class);
+            TeacherProfile teacher = mock(TeacherProfile.class);
+            CreateNoteRequest request = CreateNoteRequest.of(
+                    NoteCategory.ACHIEVEMENT, "수상 내역", LocalDate.of(2025, 3, 1));
+            StudentNote saved = mock(StudentNote.class);
+            when(studentNoteRepository.save(any(StudentNote.class))).thenReturn(saved);
+
+            StudentNote result = studentNoteService.save(student, request, teacher);
+
+            assertAll(
+                    () -> verify(studentNoteRepository).save(any(StudentNote.class)),
+                    () -> assertEquals(saved, result)
+            );
+        }
+    }
+
+    @Nested
+    @DisplayName("4. update()")
+    class Update {
+
+        @Test
+        @DisplayName("TC-4-1. note.update 호출, 같은 note 반환")
+        void success() {
+            StudentNote note = mock(StudentNote.class);
+            UpdateNoteRequest request = UpdateNoteRequest.of(
+                    NoteCategory.VOLUNTEER, "봉사 활동", LocalDate.of(2025, 4, 1));
+
+            StudentNote result = studentNoteService.update(note, request);
+
+            assertAll(
+                    () -> verify(note).update(NoteCategory.VOLUNTEER, "봉사 활동", LocalDate.of(2025, 4, 1)),
+                    () -> assertEquals(note, result)
+            );
+        }
+    }
+
+    @Nested
+    @DisplayName("5. delete()")
+    class Delete {
+
+        @Test
+        @DisplayName("TC-5-1. repository.delete 호출")
+        void success() {
+            StudentNote note = mock(StudentNote.class);
+
+            studentNoteService.delete(note);
+
+            verify(studentNoteRepository).delete(note);
         }
     }
 }

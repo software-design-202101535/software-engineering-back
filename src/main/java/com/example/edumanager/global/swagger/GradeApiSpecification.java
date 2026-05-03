@@ -24,7 +24,7 @@ import java.util.List;
 @Tag(name = "성적 API", description = "성적 조회 및 일괄 등록/수정/삭제")
 public interface GradeApiSpecification {
 
-    @Operation(summary = "성적 조회", description = "학생의 특정 학기/시험유형 성적 목록을 조회합니다. ADMIN·담임교사·본인 학생·연결된 학부모만 접근 가능합니다.")
+    @Operation(summary = "성적 조회", description = "학생의 특정 학기/시험유형 성적 목록을 조회합니다. 담임교사·본인 학생·연결된 학부모만 접근 가능합니다.")
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200", description = "조회 성공",
@@ -95,7 +95,7 @@ public interface GradeApiSpecification {
             @AuthenticationPrincipal UserDetailsImpl userDetails);
 
     @Operation(summary = "성적 일괄 처리", description = """
-            성적 추가/수정/삭제를 하나의 요청으로 처리합니다. ADMIN·담임교사만 가능합니다.
+            성적 추가/수정/삭제를 하나의 요청으로 처리합니다. 담임교사만 가능합니다.
 
             PUT 방식으로 동작하므로 프론트엔드는 유지할 항목을 포함한 전체 상태를 전송해야 합니다.
             - create: 새로 추가할 성적 목록
@@ -143,7 +143,7 @@ public interface GradeApiSpecification {
                     )
             ),
             @ApiResponse(
-                    responseCode = "403", description = "담임교사 또는 관리자가 아닌 경우",
+                    responseCode = "403", description = "담임교사가 아닌 경우",
                     content = @Content(
                             schema = @Schema(implementation = ErrorResponse.class),
                             examples = @ExampleObject("""

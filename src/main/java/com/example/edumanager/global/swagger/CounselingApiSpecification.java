@@ -45,7 +45,7 @@ public interface CounselingApiSpecification {
                                       }
                                     ]
                                     """))),
-            @ApiResponse(responseCode = "403", description = "TEACHER/ADMIN이 아닌 경우",
+            @ApiResponse(responseCode = "403", description = "TEACHER가 아닌 경우",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                             examples = @ExampleObject("""
                                     {"code": 403, "name": "STUDENT_ACCESS_DENIED", "message": "학생 정보에 접근할 권한이 없습니다."}
@@ -62,7 +62,7 @@ public interface CounselingApiSpecification {
             @RequestParam(required = false) Integer month,
             @AuthenticationPrincipal UserDetailsImpl userDetails);
 
-    @Operation(summary = "상담 기록 작성", description = "학생 상담 기록을 작성합니다. TEACHER/ADMIN만 호출 가능합니다.")
+    @Operation(summary = "상담 기록 작성", description = "학생 상담 기록을 작성합니다. TEACHER만 호출 가능합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "작성 성공",
                     content = @Content(schema = @Schema(implementation = CounselingResponse.class),
@@ -85,7 +85,7 @@ public interface CounselingApiSpecification {
                             examples = @ExampleObject("""
                                     {"code": 400, "name": "INVALID_INPUT_VALUE", "message": "잘못된 입력입니다.", "errors": {"counselingDate": "상담 날짜를 입력해주세요."}}
                                     """))),
-            @ApiResponse(responseCode = "403", description = "TEACHER/ADMIN이 아닌 경우",
+            @ApiResponse(responseCode = "403", description = "TEACHER가 아닌 경우",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class),
                             examples = @ExampleObject("""
                                     {"code": 403, "name": "STUDENT_ACCESS_DENIED", "message": "학생 정보에 접근할 권한이 없습니다."}

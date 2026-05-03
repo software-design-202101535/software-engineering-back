@@ -31,7 +31,7 @@ public interface StudentNoteApiSpecification {
                     학생의 특기사항 목록을 날짜 역순으로 반환합니다.
                     category 파라미터를 지정하면 해당 카테고리만 조회합니다.
                     category: ACHIEVEMENT | SPECIAL | VOLUNTEER | CAREER | OTHER
-                    담임교사 또는 ADMIN만 호출 가능합니다.
+                    담임교사만 호출 가능합니다.
                     """
     )
     @ApiResponses({
@@ -70,7 +70,7 @@ public interface StudentNoteApiSpecification {
             @RequestParam(required = false) NoteCategory category,
             @AuthenticationPrincipal UserDetailsImpl userDetails);
 
-    @Operation(summary = "특기사항 추가", description = "학생의 특기사항을 추가합니다. 담임교사 또는 ADMIN만 호출 가능합니다.")
+    @Operation(summary = "특기사항 추가", description = "학생의 특기사항을 추가합니다. 담임교사만 호출 가능합니다.")
     @ApiResponses({
             @ApiResponse(
                     responseCode = "201", description = "추가 성공",
@@ -110,7 +110,7 @@ public interface StudentNoteApiSpecification {
             @RequestBody @Valid CreateNoteRequest request,
             @AuthenticationPrincipal UserDetailsImpl userDetails);
 
-    @Operation(summary = "특기사항 수정", description = "특기사항의 카테고리, 내용, 날짜를 수정합니다. 담임교사 또는 ADMIN만 호출 가능합니다.")
+    @Operation(summary = "특기사항 수정", description = "특기사항의 카테고리, 내용, 날짜를 수정합니다. 담임교사만 호출 가능합니다.")
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200", description = "수정 성공",
@@ -146,7 +146,7 @@ public interface StudentNoteApiSpecification {
             @RequestBody @Valid UpdateNoteRequest request,
             @AuthenticationPrincipal UserDetailsImpl userDetails);
 
-    @Operation(summary = "특기사항 삭제", description = "특기사항을 삭제합니다. 담임교사 또는 ADMIN만 호출 가능합니다.")
+    @Operation(summary = "특기사항 삭제", description = "특기사항을 삭제합니다. 담임교사만 호출 가능합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "삭제 성공"),
             @ApiResponse(responseCode = "403", description = "담임교사가 아닌 경우",
