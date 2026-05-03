@@ -1,9 +1,11 @@
 package com.example.EduManager.domain.student.service;
 
 import com.example.EduManager.domain.student.dto.UpdateStudentRequest;
+import com.example.EduManager.domain.student.entity.ParentStudent;
 import com.example.EduManager.domain.student.entity.StudentProfile;
 import com.example.EduManager.domain.student.repository.ParentStudentRepository;
 import com.example.EduManager.domain.student.repository.StudentProfileRepository;
+import com.example.EduManager.domain.user.entity.School;
 import com.example.EduManager.domain.user.entity.User;
 import com.example.EduManager.global.exception.CustomException;
 import com.example.EduManager.global.exception.ErrorCode;
@@ -11,14 +13,17 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -118,6 +123,99 @@ class StudentServiceTest {
                     () -> studentService.getProfileByUser(user));
 
             assertEquals(ErrorCode.USER_NOT_FOUND, ex.getErrorCode());
+        }
+    }
+
+    @Nested
+    @DisplayName("4. createProfile()")
+    class CreateProfile {
+
+        @Test
+        @DisplayName("TC-4-1. 성공 → StudentProfile.of()로 생성 후 save 호출")
+        void success() {
+            studentService.createProfile(user, School.SUNRIN_HIGH_SCHOOL, 2, 3, 5);
+
+            ArgumentCaptor<StudentProfile> captor = ArgumentCaptor.forClass(StudentProfile.class);
+            verify(studentProfileRepository).save(captor.capture());
+            assertAll(
+                    () -> assertEquals(user, captor.getValue().getUser()),
+                    () -> assertEquals(School.SUNRIN_HIGH_SCHOOL, captor.getValue().getSchool()),
+                    () -> assertEquals(2, captor.getValue().getGrade()),
+                    () -> assertEquals(3, captor.getValue().getClassNum()),
+                    () -> assertEquals(5, captor.getValue().getNumber())
+            );
+        }
+    }
+
+    @Nested
+    @DisplayName("5. getParentsByStudentId()")
+    class GetParentsByStudentId {
+
+        @Test
+        @DisplayName("TC-5-1. 성공 → getById → findAllByStudent → parent 목록 반환")
+        void success() {
+            ParentStudent parentStudent = mock(ParentStudent.class);
+            when(studentProfileRepository.findById(1L)).thenReturn(Optional.of(student));
+            when(parentStudentRepository.findAllByStudent(student)).thenReturn(List.of(parentStudent));
+            when(parentStudent.getParent()).thenReturn(user);
+
+            List<User> result = studentService.getParentsByStudentId(1L);
+
+            assertEquals(List.of(user), result);
+        }
+    }
+
+    @Nested
+    @DisplayName("6. getProfilesByParent()")
+    class GetProfilesByParent {
+
+        @Test
+        @DisplayName("TC-6-1. 성공 → findAllByParent → student 목록 반환")
+        void success() {
+            ParentStudent parentStudent = mock(ParentStudent.class);
+            when(parentStudentRepository.findAllByParent(user)).thenReturn(List.of(parentStudent));
+            when(parentStudent.getStudent()).thenReturn(student);
+
+            List<StudentProfile> result = studentService.getProfilesByParent(user);
+
+            assertEquals(List.of(student), result);
+        }
+    }
+
+    @Nested
+    @DisplayName("7. getClassStudents()")
+    class GetClassStudents {
+
+        @Test
+        @DisplayName("TC-7-1. 성공 → repository 위임, 결과 반환")
+        void success() {
+            when(studentProfileRepository.findAllByGradeAndClassNumAndSchool(2, 3, School.SUNRIN_HIGH_SCHOOL))
+                    .thenReturn(List.of(student));
+
+            List<StudentProfile> result = studentService.getClassStudents(2, 3, School.SUNRIN_HIGH_SCHOOL);
+
+            assertAll(
+                    () -> verify(studentProfileRepository).findAllByGradeAndClassNumAndSchool(2, 3, School.SUNRIN_HIGH_SCHOOL),
+                    () -> assertEquals(List.of(student), result)
+            );
+        }
+    }
+
+    @Nested
+    @DisplayName("8. linkParent()")
+    class LinkParent {
+
+        @Test
+        @DisplayName("TC-8-1. 성공 → ParentStudent.of()로 생성 후 save 호출")
+        void success() {
+            studentService.linkParent(user, student);
+
+            ArgumentCaptor<ParentStudent> captor = ArgumentCaptor.forClass(ParentStudent.class);
+            verify(parentStudentRepository).save(captor.capture());
+            assertAll(
+                    () -> assertEquals(user, captor.getValue().getParent()),
+                    () -> assertEquals(student, captor.getValue().getStudent())
+            );
         }
     }
 }
