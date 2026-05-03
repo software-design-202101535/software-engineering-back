@@ -37,6 +37,10 @@ public class CounselingResponse {
         this.createdAt = createdAt;
     }
 
+    public static CounselingResponse ofForTest(Long id) {
+        return CounselingResponse.builder().id(id).build();
+    }
+
     public static CounselingResponse of(Counseling counseling) {
         return CounselingResponse.builder()
                 .id(counseling.getId())

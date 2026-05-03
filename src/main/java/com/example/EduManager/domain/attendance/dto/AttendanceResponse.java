@@ -14,6 +14,12 @@ public class AttendanceResponse {
     private String status;
     private String reason;
 
+    public static AttendanceResponse ofForTest(Long id) {
+        AttendanceResponse response = new AttendanceResponse();
+        response.id = id;
+        return response;
+    }
+
     public static AttendanceResponse of(Attendance attendance) {
         AttendanceResponse response = new AttendanceResponse();
         response.id = attendance.getId();

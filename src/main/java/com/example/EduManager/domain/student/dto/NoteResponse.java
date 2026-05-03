@@ -17,6 +17,12 @@ public class NoteResponse {
     private LocalDate date;
     private LocalDateTime createdAt;
 
+    public static NoteResponse ofForTest(Long id) {
+        NoteResponse response = new NoteResponse();
+        response.id = id;
+        return response;
+    }
+
     public static NoteResponse of(StudentNote note) {
         NoteResponse response = new NoteResponse();
         response.id = note.getId();

@@ -42,6 +42,13 @@ public class LoginResponse {
         this.children = children;
     }
 
+    public static LoginResponse ofForTest(String accessToken, String refreshToken) {
+        return LoginResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+    }
+
     public static LoginResponse ofTeacher(User user, AuthTokens tokens, TeacherProfile profile) {
         return LoginResponse.builder()
                 .accessToken(tokens.getAccessToken())

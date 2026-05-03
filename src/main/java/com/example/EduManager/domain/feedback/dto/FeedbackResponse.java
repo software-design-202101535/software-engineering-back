@@ -32,6 +32,10 @@ public class FeedbackResponse {
         this.teacherName = teacherName;
     }
 
+    public static FeedbackResponse ofForTest(Long id) {
+        return FeedbackResponse.builder().id(id).build();
+    }
+
     public static FeedbackResponse of(Feedback feedback) {
         return FeedbackResponse.builder()
                 .id(feedback.getId())

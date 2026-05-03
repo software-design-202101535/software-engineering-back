@@ -12,6 +12,12 @@ public class StudentSummaryResponse {
     private int classNum;
     private int number;
 
+    public static StudentSummaryResponse ofForTest(Long id) {
+        StudentSummaryResponse response = new StudentSummaryResponse();
+        response.id = id;
+        return response;
+    }
+
     public static StudentSummaryResponse of(StudentProfile profile) {
         StudentSummaryResponse response = new StudentSummaryResponse();
         response.id = profile.getId();

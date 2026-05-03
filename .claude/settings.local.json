@@ -1,10 +1,15 @@
 {
   "permissions": {
     "allow": [
-      "Bash(grep \"\\\\.java$\")"
+      "Bash(grep \"\\\\.java$\")",
+      "Bash(./gradlew*)",
+      "Bash(unzip -l /c/Users/silver/.gradle/caches/modules-2/files-2.1/org.springframework/spring-test/7.0.6/fd012839666ea5696d9efda89717d5f3f134fefe/spring-test-7.0.6.jar)",
+      "Bash(unzip -l /c/Users/silver/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-test/4.0.4/ff215df7a4cd065d8396763a8dd20948fd5f5ab1/spring-boot-test-4.0.4.jar)",
+      "WebSearch",
+      "PowerShell(Get-ChildItem *)"
     ],
     "env": {
-      "SONAR_URL" : "https://sonarcloud.io",
+      "SONAR_URL": "https://sonarcloud.io",
       "SONAR_TOKEN": "e6f1bd33633ee14b02182d869f200341e3174bc8",
       "SONAR_PROJECT_KEY": "software-design-202101535"
     }

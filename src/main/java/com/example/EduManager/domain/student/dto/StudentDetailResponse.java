@@ -18,6 +18,13 @@ public class StudentDetailResponse {
     private String parentPhone;
     private String address;
 
+    public static StudentDetailResponse ofForTest(Long id, String name) {
+        StudentDetailResponse response = new StudentDetailResponse();
+        response.id = id;
+        response.name = name;
+        return response;
+    }
+
     public static StudentDetailResponse of(StudentProfile profile) {
         StudentDetailResponse response = new StudentDetailResponse();
         response.id = profile.getId();

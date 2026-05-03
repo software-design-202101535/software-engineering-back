@@ -18,7 +18,18 @@ public class GradeResponse {
         this.grade = grade.getGrade() != null ? grade.getGrade().name() : null;
     }
 
+    private GradeResponse(Long id) {
+        this.id = id;
+        this.subject = null;
+        this.score = null;
+        this.grade = null;
+    }
+
     public static GradeResponse of(Grade grade) {
         return new GradeResponse(grade);
+    }
+
+    public static GradeResponse ofForTest(Long id) {
+        return new GradeResponse(id);
     }
 }

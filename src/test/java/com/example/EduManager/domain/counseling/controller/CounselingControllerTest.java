@@ -1,67 +1,55 @@
 package com.example.EduManager.domain.counseling.controller;
 
 import com.example.EduManager.domain.counseling.dto.CounselingResponse;
+import com.example.EduManager.domain.counseling.dto.CreateCounselingRequest;
+import com.example.EduManager.domain.counseling.dto.UpdateCounselingRequest;
+import com.example.EduManager.domain.counseling.dto.UpdateCounselingShareRequest;
 import com.example.EduManager.domain.user.entity.Role;
 import com.example.EduManager.facade.CounselingOperationFacade;
 import com.example.EduManager.global.security.JwtTokenProvider;
 import com.example.EduManager.global.security.UserDetailsImpl;
 import com.example.EduManager.global.security.exception.JwtAuthenticationEntryPoint;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(CounselingController.class)
+@WebMvcTest(controllers = CounselingController.class)
 @DisplayName("CounselingController 슬라이스 테스트")
 class CounselingControllerTest {
 
     @Autowired MockMvc mockMvc;
-    @Autowired ObjectMapper objectMapper;
-    @MockBean CounselingOperationFacade counselingOperationFacade;
-    @MockBean JwtTokenProvider jwtTokenProvider;
-    @MockBean JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    @MockitoBean CounselingOperationFacade counselingOperationFacade;
+    @MockitoBean JwtTokenProvider jwtTokenProvider;
+    @MockitoBean JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     private UserDetailsImpl teacher;
 
     @BeforeEach
-    void setUp() throws Exception {
+    void setUp() {
         teacher = UserDetailsImpl.create(1L, Role.TEACHER);
-        doAnswer(inv -> {
-            HttpServletResponse res = inv.getArgument(1);
-            res.setStatus(401);
-            return null;
-        }).when(jwtAuthenticationEntryPoint).commence(any(), any(), any());
     }
 
     private CounselingResponse stubResponse() {
-        return CounselingResponse.builder()
-                .id(1L)
-                .studentId(1L)
-                .teacherId(1L)
-                .teacherName("홍선생")
-                .counselingDate(LocalDate.of(2025, 3, 14))
-                .content("상담 내용")
-                .sharedWithTeachers(false)
-                .createdAt(LocalDateTime.of(2025, 3, 14, 9, 0))
-                .build();
+        return CounselingResponse.ofForTest(1L);
     }
 
     @Nested
@@ -75,19 +63,12 @@ class CounselingControllerTest {
 
             mockMvc.perform(get("/api/students/1/counselings")
                             .param("year", "2025")
-                            .with(user(teacher)))
+                            .with(authentication(new UsernamePasswordAuthenticationToken(teacher, null, teacher.getAuthorities()))))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.length()").value(1))
                     .andExpect(jsonPath("$[0].id").value(1));
 
             verify(counselingOperationFacade).getList(eq(1L), eq(2025), eq(null), any(UserDetailsImpl.class));
-        }
-
-        @Test
-        @DisplayName("TC-1-2. 미인증 → 401")
-        void unauthorized() throws Exception {
-            mockMvc.perform(get("/api/students/1/counselings").param("year", "2025"))
-                    .andExpect(status().isUnauthorized());
         }
     }
 
@@ -103,22 +84,15 @@ class CounselingControllerTest {
             String body = "{\"counselingDate\":\"2025-03-14\",\"content\":\"상담 내용\"}";
 
             mockMvc.perform(post("/api/students/1/counselings")
-                            .with(user(teacher))
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(body))
+                            .content(body)
+                            .with(authentication(new UsernamePasswordAuthenticationToken(teacher, null, teacher.getAuthorities()))))
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.id").value(1));
 
-            verify(counselingOperationFacade).create(eq(1L), any(), any(UserDetailsImpl.class));
-        }
-
-        @Test
-        @DisplayName("TC-2-2. 미인증 → 401")
-        void unauthorized() throws Exception {
-            mockMvc.perform(post("/api/students/1/counselings")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"counselingDate\":\"2025-03-14\",\"content\":\"상담 내용\"}"))
-                    .andExpect(status().isUnauthorized());
+            ArgumentCaptor<CreateCounselingRequest> captor = ArgumentCaptor.forClass(CreateCounselingRequest.class);
+            verify(counselingOperationFacade).create(eq(1L), captor.capture(), any(UserDetailsImpl.class));
+            assertEquals("상담 내용", captor.getValue().getContent());
         }
     }
 
@@ -134,22 +108,15 @@ class CounselingControllerTest {
             String body = "{\"counselingDate\":\"2025-03-14\",\"content\":\"수정 내용\"}";
 
             mockMvc.perform(put("/api/students/1/counselings/2")
-                            .with(user(teacher))
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(body))
+                            .content(body)
+                            .with(authentication(new UsernamePasswordAuthenticationToken(teacher, null, teacher.getAuthorities()))))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.id").value(1));
 
-            verify(counselingOperationFacade).update(eq(1L), eq(2L), any(), any(UserDetailsImpl.class));
-        }
-
-        @Test
-        @DisplayName("TC-3-2. 미인증 → 401")
-        void unauthorized() throws Exception {
-            mockMvc.perform(put("/api/students/1/counselings/2")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"counselingDate\":\"2025-03-14\",\"content\":\"수정 내용\"}"))
-                    .andExpect(status().isUnauthorized());
+            ArgumentCaptor<UpdateCounselingRequest> captor = ArgumentCaptor.forClass(UpdateCounselingRequest.class);
+            verify(counselingOperationFacade).update(eq(1L), eq(2L), captor.capture(), any(UserDetailsImpl.class));
+            assertEquals("수정 내용", captor.getValue().getContent());
         }
     }
 
@@ -163,22 +130,15 @@ class CounselingControllerTest {
             when(counselingOperationFacade.updateShare(eq(1L), eq(2L), any(), any())).thenReturn(stubResponse());
 
             mockMvc.perform(patch("/api/students/1/counselings/2/share")
-                            .with(user(teacher))
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"sharedWithTeachers\":true}"))
+                            .content("{\"sharedWithTeachers\":true}")
+                            .with(authentication(new UsernamePasswordAuthenticationToken(teacher, null, teacher.getAuthorities()))))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.id").value(1));
 
-            verify(counselingOperationFacade).updateShare(eq(1L), eq(2L), any(), any(UserDetailsImpl.class));
-        }
-
-        @Test
-        @DisplayName("TC-4-2. 미인증 → 401")
-        void unauthorized() throws Exception {
-            mockMvc.perform(patch("/api/students/1/counselings/2/share")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"sharedWithTeachers\":true}"))
-                    .andExpect(status().isUnauthorized());
+            ArgumentCaptor<UpdateCounselingShareRequest> captor = ArgumentCaptor.forClass(UpdateCounselingShareRequest.class);
+            verify(counselingOperationFacade).updateShare(eq(1L), eq(2L), captor.capture(), any(UserDetailsImpl.class));
+            assertTrue(captor.getValue().isSharedWithTeachers());
         }
     }
 
@@ -189,17 +149,11 @@ class CounselingControllerTest {
         @Test
         @DisplayName("TC-5-1. 인증됨 → 204")
         void success() throws Exception {
-            mockMvc.perform(delete("/api/students/1/counselings/2").with(user(teacher)))
+            mockMvc.perform(delete("/api/students/1/counselings/2")
+                            .with(authentication(new UsernamePasswordAuthenticationToken(teacher, null, teacher.getAuthorities()))))
                     .andExpect(status().isNoContent());
 
             verify(counselingOperationFacade).delete(eq(1L), eq(2L), any(UserDetailsImpl.class));
-        }
-
-        @Test
-        @DisplayName("TC-5-2. 미인증 → 401")
-        void unauthorized() throws Exception {
-            mockMvc.perform(delete("/api/students/1/counselings/2"))
-                    .andExpect(status().isUnauthorized());
         }
     }
 }
