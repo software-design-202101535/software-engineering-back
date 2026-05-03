@@ -1,4 +1,4 @@
-name: EduManager server CI & CD
+name: edumanager server CI & CD
 
 on:
   push:
