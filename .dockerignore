@@ -2,10 +2,12 @@
 .github
 .gradle
 .idea
+.claude
 build
 src/test
 *.md
 *.bat
+erd.html
 docker-compose.yml
 .dockerignore
 .gitignore

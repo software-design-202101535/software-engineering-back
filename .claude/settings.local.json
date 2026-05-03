@@ -2,6 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(grep \"\\\\.java$\")"
-    ]
+    ],
+    "env": {
+      "SONAR_URL" : "https://sonarcloud.io",
+      "SONAR_TOKEN": "e6f1bd33633ee14b02182d869f200341e3174bc8",
+      "SONAR_PROJECT_KEY": "software-design-202101535"
+    }
   }
 }
