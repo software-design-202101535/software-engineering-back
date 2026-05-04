@@ -11,11 +11,13 @@ import com.example.edumanager.domain.user.entity.User;
 import com.example.edumanager.domain.user.repository.RefreshTokenRepository;
 import com.example.edumanager.domain.user.repository.UserRepository;
 import com.example.edumanager.global.security.JwtTokenProvider;
-import tools.jackson.databind.ObjectMapper;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
@@ -25,8 +27,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import tools.jackson.databind.ObjectMapper;
 
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.Objects;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -48,6 +54,8 @@ public abstract class AbstractIntegrationTest {
     @Autowired protected PasswordEncoder passwordEncoder;
 
     @PersistenceContext private EntityManager em;
+
+    @Value("${jwt.secret}") private String jwtSecret;
 
     @AfterEach
     void truncateAllTables() {
@@ -85,6 +93,16 @@ public abstract class AbstractIntegrationTest {
 
     protected String issueAccessToken(Long userId) {
         return jwtTokenProvider.createAccessToken(userId);
+    }
+
+    // JwtTokenProvider.createAccessToken 우회 — 시간 조작 없이 ExpiredJwtException 분기만 직접 트리거
+    protected String issueExpiredAccessToken(Long userId) {
+        SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+        return Jwts.builder()
+                .subject(String.valueOf(userId))
+                .expiration(new Date(System.currentTimeMillis() - 1000))
+                .signWith(key)
+                .compact();
     }
 
     protected String issueAndStoreRefreshToken(User user) {
