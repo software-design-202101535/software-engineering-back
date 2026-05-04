@@ -16,6 +16,10 @@ spring:
     show-sql: false
     open-in-view: false
 
+  sql:
+    init:
+      mode: never
+
 jwt:
   secret: test-secret-key-must-be-at-least-256-bits-long-1234567890
   access-token-expiry: 1800000
