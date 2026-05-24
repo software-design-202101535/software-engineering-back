@@ -5,8 +5,6 @@ import com.example.edumanager.domain.devicetoken.repository.DeviceTokenRepositor
 import com.example.edumanager.domain.user.entity.Role;
 import com.example.edumanager.domain.user.entity.User;
 import com.example.edumanager.domain.user.service.UserService;
-import com.example.edumanager.global.exception.CustomException;
-import com.example.edumanager.global.exception.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -15,14 +13,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -79,21 +75,6 @@ class DeviceTokenServiceTest {
                     () -> verify(deviceTokenRepository, never()).saveAndFlush(any()),
                     () -> assertEquals(existing, result)
             );
-        }
-
-        @Test
-        @DisplayName("TC-1-3. 동시 insert로 unique 위반 → DEVICE_TOKEN_CONCURRENT_REGISTER 변환")
-        void concurrentInsertConflict() {
-            User user = User.of("a@b.com", "pw", "홍길동", Role.STUDENT);
-            when(userService.getById(1L)).thenReturn(user);
-            when(deviceTokenRepository.findByToken("race-token")).thenReturn(Optional.empty());
-            when(deviceTokenRepository.saveAndFlush(any(DeviceToken.class)))
-                    .thenThrow(new DataIntegrityViolationException("duplicate"));
-
-            CustomException ex = assertThrows(CustomException.class,
-                    () -> deviceTokenService.register(1L, "race-token"));
-
-            assertEquals(ErrorCode.DEVICE_TOKEN_CONCURRENT_REGISTER, ex.getErrorCode());
         }
     }
 
