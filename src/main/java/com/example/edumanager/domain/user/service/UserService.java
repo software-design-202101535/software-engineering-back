@@ -30,6 +30,13 @@ public class UserService {
         return userRepository.save(User.ofParent(email, passwordEncoder.encode(rawPassword), name));
     }
 
+    public User registerOAuthUser(String email, String name, Role role) {
+        if (userRepository.existsByEmail(email)) {
+            throw new CustomException(ErrorCode.DUPLICATED_USER);
+        }
+        return userRepository.save(User.ofOAuth(email, name, role));
+    }
+
     public User getById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
