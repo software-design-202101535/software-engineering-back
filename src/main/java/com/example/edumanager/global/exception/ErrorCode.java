@@ -65,7 +65,8 @@ public enum ErrorCode {
     DATA_INTEGRITY_VIOLATION(HttpStatus.CONFLICT, 409, "이미 존재하는 데이터이거나 처리할 수 없는 요청입니다."),
 
     // OAuth
-    OAUTH_PROVIDER_ERROR(HttpStatus.BAD_GATEWAY, 502, "OAuth 제공자와의 통신에 실패했습니다.");
+    OAUTH_PROVIDER_ERROR(HttpStatus.BAD_GATEWAY, 502, "OAuth 제공자와의 통신에 실패했습니다."),
+    OAUTH_INVALID_AUTHCODE(HttpStatus.BAD_REQUEST, 400, "유효하지 않거나 만료된 인증 코드입니다.");
 
     private final HttpStatus httpStatus;
     private final Integer code;
