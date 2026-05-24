@@ -17,8 +17,6 @@ public class OAuthProperties {
         private final String clientId;
         private final String clientSecret;
         private final String redirectUri;
-        private final String frontendRedirectUri;
-        private final String authorizationUri;
         private final String tokenUri;
         private final String userInfoUri;
     }

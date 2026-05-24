@@ -66,9 +66,7 @@ public enum ErrorCode {
 
     // OAuth
     OAUTH_PROVIDER_ERROR(HttpStatus.BAD_GATEWAY, 502, "OAuth 제공자와의 통신에 실패했습니다."),
-    OAUTH_INVALID_AUTHCODE(HttpStatus.BAD_REQUEST, 400, "유효하지 않거나 만료된 인증 코드입니다."),
-    OAUTH_PENDING_NOT_NEW_USER(HttpStatus.BAD_REQUEST, 400, "이미 가입된 사용자입니다. 토큰 교환을 사용해주세요."),
-    OAUTH_PENDING_NOT_EXISTING_USER(HttpStatus.BAD_REQUEST, 400, "추가 정보 입력이 필요한 사용자입니다."),
+    INVALID_TEMP_TOKEN(HttpStatus.BAD_REQUEST, 400, "유효하지 않거나 만료된 임시 토큰입니다."),
     OAUTH_EMAIL_REQUIRED(HttpStatus.BAD_REQUEST, 400, "이메일을 입력해주세요."),
     OAUTH_ROLE_INFO_REQUIRED(HttpStatus.BAD_REQUEST, 400, "선택한 역할에 필요한 정보가 누락되었습니다.");
 

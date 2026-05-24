@@ -4,12 +4,12 @@ import com.example.edumanager.domain.auth.dto.AuthTokens;
 import com.example.edumanager.domain.auth.dto.ChildSummary;
 import com.example.edumanager.domain.auth.dto.LoginResponse;
 import com.example.edumanager.domain.auth.service.AuthService;
-import com.example.edumanager.domain.oauth.client.OAuthProperties;
-import com.example.edumanager.domain.oauth.dto.OAuthAuthorizeResult;
-import com.example.edumanager.domain.oauth.dto.OAuthCompleteRequest;
-import com.example.edumanager.domain.oauth.dto.OAuthTokenRequest;
-import com.example.edumanager.domain.oauth.service.OAuthPending;
+import com.example.edumanager.domain.oauth.dto.OAuthLoginRequest;
+import com.example.edumanager.domain.oauth.dto.OAuthLoginResponse;
+import com.example.edumanager.domain.oauth.dto.OAuthRegisterRequest;
+import com.example.edumanager.domain.oauth.service.OAuthLoginResult;
 import com.example.edumanager.domain.oauth.service.OAuthService;
+import com.example.edumanager.domain.oauth.service.OAuthTempTokenPayload;
 import com.example.edumanager.domain.student.entity.StudentProfile;
 import com.example.edumanager.domain.student.service.StudentService;
 import com.example.edumanager.domain.teacher.service.TeacherService;
@@ -22,9 +22,6 @@ import com.example.edumanager.global.util.EnumConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.util.UriComponentsBuilder;
-
-import java.net.URI;
 
 @Component
 @RequiredArgsConstructor
@@ -35,58 +32,27 @@ public class OAuthFacade {
     private final StudentService studentService;
     private final TeacherService teacherService;
     private final AuthService authService;
-    private final OAuthProperties oauthProperties;
-
-    public URI buildKakaoAuthorizeUrl() {
-        OAuthProperties.Kakao kakao = oauthProperties.getKakao();
-        return UriComponentsBuilder.fromUriString(kakao.getAuthorizationUri())
-                .queryParam("client_id", kakao.getClientId())
-                .queryParam("redirect_uri", kakao.getRedirectUri())
-                .queryParam("response_type", "code")
-                .build()
-                .toUri();
-    }
-
-    public URI buildFrontendRedirectUrl(String code) {
-        OAuthAuthorizeResult result = oauthService.handleKakaoCallback(code);
-
-        UriComponentsBuilder builder = UriComponentsBuilder
-                .fromUriString(oauthProperties.getKakao().getFrontendRedirectUri())
-                .queryParam("authCode", result.getAuthCode());
-
-        if (result.isNeedsInfo()) {
-            builder.queryParam("needsInfo", "true");
-            if (result.getEmail() != null) {
-                builder.queryParam("email", result.getEmail());
-            }
-            if (result.getName() != null) {
-                builder.queryParam("name", result.getName());
-            }
-        }
-        return builder.build().toUri();
-    }
 
     @Transactional
-    public LoginResponse token(OAuthTokenRequest request) {
-        OAuthPending pending = oauthService.consumeAuthCode(request.getAuthCode());
-        if (pending.isNewUser()) {
-            throw new CustomException(ErrorCode.OAUTH_PENDING_NOT_EXISTING_USER);
+    public OAuthLoginResponse loginWithKakao(OAuthLoginRequest request) {
+        OAuthLoginResult result = oauthService.loginWithKakao(request.getCode());
+
+        if (result.isNewUser()) {
+            return OAuthLoginResponse.newUser(result.getTempToken(), result.getEmail(), result.getName());
         }
-        User user = userService.getById(pending.getExistingUserId());
+
+        User user = userService.getById(result.getExistingUserId());
         AuthTokens tokens = authService.issueTokens(user);
-        return buildLoginResponse(user, tokens);
+        return OAuthLoginResponse.existing(buildLoginResponse(user, tokens));
     }
 
     @Transactional
-    public LoginResponse complete(OAuthCompleteRequest request) {
-        OAuthPending pending = oauthService.consumeAuthCode(request.getAuthCode());
-        if (!pending.isNewUser()) {
-            throw new CustomException(ErrorCode.OAUTH_PENDING_NOT_NEW_USER);
-        }
+    public LoginResponse registerWithKakao(OAuthRegisterRequest request) {
+        OAuthTempTokenPayload payload = oauthService.parseTempToken(request.getTempToken());
 
-        String email = resolveEmail(pending, request);
-        User user = userService.registerOAuthUser(email, pending.getName(), request.getRole());
-        oauthService.link(user, pending.getProvider(), pending.getOauthId());
+        String email = resolveEmail(payload, request);
+        User user = userService.registerOAuthUser(email, payload.getName(), request.getRole());
+        oauthService.link(user, payload.getProvider(), payload.getOauthId());
 
         switch (request.getRole()) {
             case TEACHER -> createTeacherProfile(user, request.getTeacherInfo());
@@ -98,9 +64,9 @@ public class OAuthFacade {
         return buildLoginResponse(user, tokens);
     }
 
-    private String resolveEmail(OAuthPending pending, OAuthCompleteRequest request) {
-        if (pending.getEmail() != null && !pending.getEmail().isBlank()) {
-            return pending.getEmail();
+    private String resolveEmail(OAuthTempTokenPayload payload, OAuthRegisterRequest request) {
+        if (payload.getEmail() != null && !payload.getEmail().isBlank()) {
+            return payload.getEmail();
         }
         if (request.getEmail() != null && !request.getEmail().isBlank()) {
             return request.getEmail();
@@ -108,7 +74,7 @@ public class OAuthFacade {
         throw new CustomException(ErrorCode.OAUTH_EMAIL_REQUIRED);
     }
 
-    private void createTeacherProfile(User user, OAuthCompleteRequest.TeacherInfo info) {
+    private void createTeacherProfile(User user, OAuthRegisterRequest.TeacherInfo info) {
         if (info == null) {
             throw new CustomException(ErrorCode.OAUTH_ROLE_INFO_REQUIRED);
         }
@@ -116,7 +82,7 @@ public class OAuthFacade {
         teacherService.createProfile(user, school, info.getGrade(), info.getClassNum());
     }
 
-    private void createStudentProfile(User user, OAuthCompleteRequest.StudentInfo info) {
+    private void createStudentProfile(User user, OAuthRegisterRequest.StudentInfo info) {
         if (info == null) {
             throw new CustomException(ErrorCode.OAUTH_ROLE_INFO_REQUIRED);
         }
@@ -124,7 +90,7 @@ public class OAuthFacade {
         studentService.createProfile(user, school, info.getGrade(), info.getClassNum(), info.getNumber());
     }
 
-    private void linkParent(User parent, OAuthCompleteRequest.ParentInfo info) {
+    private void linkParent(User parent, OAuthRegisterRequest.ParentInfo info) {
         if (info == null) {
             throw new CustomException(ErrorCode.OAUTH_ROLE_INFO_REQUIRED);
         }

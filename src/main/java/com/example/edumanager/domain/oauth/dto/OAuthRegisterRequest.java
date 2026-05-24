@@ -10,10 +10,10 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 
 @Getter
-public class OAuthCompleteRequest {
+public class OAuthRegisterRequest {
 
-    @NotBlank(message = "authCode를 입력해주세요.")
-    private String authCode;
+    @NotBlank(message = "임시 토큰을 입력해주세요.")
+    private String tempToken;
 
     @NotNull(message = "역할을 선택해주세요.")
     private Role role;
@@ -36,10 +36,10 @@ public class OAuthCompleteRequest {
     private boolean privacyAgreed;
 
     @SuppressWarnings("java:S107")
-    public static OAuthCompleteRequest of(String authCode, Role role, String email,
+    public static OAuthRegisterRequest of(String tempToken, Role role, String email,
                                            TeacherInfo teacherInfo, StudentInfo studentInfo, ParentInfo parentInfo) {
-        OAuthCompleteRequest request = new OAuthCompleteRequest();
-        request.authCode = authCode;
+        OAuthRegisterRequest request = new OAuthRegisterRequest();
+        request.tempToken = tempToken;
         request.role = role;
         request.email = email;
         request.teacherInfo = teacherInfo;

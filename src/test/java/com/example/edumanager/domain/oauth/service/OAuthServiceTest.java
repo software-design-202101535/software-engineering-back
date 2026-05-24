@@ -2,18 +2,16 @@ package com.example.edumanager.domain.oauth.service;
 
 import com.example.edumanager.domain.oauth.client.KakaoOAuthClient;
 import com.example.edumanager.domain.oauth.client.OAuthUserInfo;
-import com.example.edumanager.domain.oauth.dto.OAuthAuthorizeResult;
 import com.example.edumanager.domain.oauth.entity.OAuthAccount;
 import com.example.edumanager.domain.oauth.entity.OAuthProvider;
 import com.example.edumanager.domain.oauth.repository.OAuthAccountRepository;
 import com.example.edumanager.domain.user.entity.User;
-import com.example.edumanager.global.exception.CustomException;
-import com.example.edumanager.global.exception.ErrorCode;
+import com.example.edumanager.global.security.JwtTokenProvider;
+import io.jsonwebtoken.Claims;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -23,9 +21,9 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -34,93 +32,77 @@ import static org.mockito.Mockito.when;
 class OAuthServiceTest {
 
     @Mock OAuthAccountRepository oauthAccountRepository;
-    @Mock OAuthPendingStore pendingStore;
     @Mock KakaoOAuthClient kakaoOAuthClient;
+    @Mock JwtTokenProvider jwtTokenProvider;
 
     @InjectMocks OAuthService oauthService;
 
     @Mock User user;
+    @Mock Claims claims;
 
     @Nested
-    @DisplayName("1. handleKakaoCallback()")
-    class HandleKakaoCallback {
+    @DisplayName("1. loginWithKakao()")
+    class LoginWithKakao {
 
         @Test
-        @DisplayName("TC-1-1. 기존 유저(OAuthAccount 존재) → existingUserId pending + needsInfo=false")
+        @DisplayName("TC-1-1. 기존 유저 → existing(userId) 반환, tempToken 발급 안 함")
         void existingUser() {
-            OAuthUserInfo info = OAuthUserInfo.of("kakao-123", "user@kakao.com", "홍길동");
-            when(kakaoOAuthClient.fetchUserInfo("code-xxx")).thenReturn(info);
-            when(oauthAccountRepository.findUserIdByProviderAndOauthId(OAuthProvider.KAKAO, "kakao-123"))
-                    .thenReturn(Optional.of(5L));
-            when(pendingStore.save(any(OAuthPending.class))).thenReturn("auth-yyy");
+            OAuthUserInfo info = OAuthUserInfo.of("kakao-1", "e@k.com", "name");
+            when(kakaoOAuthClient.fetchUserInfo("code-1")).thenReturn(info);
+            when(oauthAccountRepository.findUserIdByProviderAndOauthId(OAuthProvider.KAKAO, "kakao-1"))
+                    .thenReturn(Optional.of(7L));
 
-            OAuthAuthorizeResult result = oauthService.handleKakaoCallback("code-xxx");
-
-            ArgumentCaptor<OAuthPending> captor = ArgumentCaptor.forClass(OAuthPending.class);
-            verify(pendingStore).save(captor.capture());
-            OAuthPending saved = captor.getValue();
+            OAuthLoginResult result = oauthService.loginWithKakao("code-1");
 
             assertAll(
-                    () -> assertEquals("auth-yyy", result.getAuthCode()),
-                    () -> assertFalse(result.isNeedsInfo()),
-                    () -> assertEquals("user@kakao.com", result.getEmail()),
-                    () -> assertEquals("홍길동", result.getName()),
-                    () -> assertFalse(saved.isNewUser()),
-                    () -> assertEquals(5L, saved.getExistingUserId()),
-                    () -> assertEquals(OAuthProvider.KAKAO, saved.getProvider()),
-                    () -> assertEquals("kakao-123", saved.getOauthId())
+                    () -> assertFalse(result.isNewUser()),
+                    () -> assertEquals(7L, result.getExistingUserId()),
+                    () -> verify(jwtTokenProvider, never()).createTempToken(any(), any(), any(), any())
             );
         }
 
         @Test
-        @DisplayName("TC-1-2. 신규 유저(OAuthAccount 없음) → newUser pending + needsInfo=true")
+        @DisplayName("TC-1-2. 신규 유저 → newUser(tempToken, email, name) 반환")
         void newUser() {
-            OAuthUserInfo info = OAuthUserInfo.of("kakao-456", "newuser@kakao.com", "김신규");
-            when(kakaoOAuthClient.fetchUserInfo("code-zzz")).thenReturn(info);
-            when(oauthAccountRepository.findUserIdByProviderAndOauthId(OAuthProvider.KAKAO, "kakao-456"))
+            OAuthUserInfo info = OAuthUserInfo.of("kakao-2", "new@k.com", "신규");
+            when(kakaoOAuthClient.fetchUserInfo("code-2")).thenReturn(info);
+            when(oauthAccountRepository.findUserIdByProviderAndOauthId(OAuthProvider.KAKAO, "kakao-2"))
                     .thenReturn(Optional.empty());
-            when(pendingStore.save(any(OAuthPending.class))).thenReturn("auth-www");
+            when(jwtTokenProvider.createTempToken("kakao-2", OAuthProvider.KAKAO, "new@k.com", "신규"))
+                    .thenReturn("temp-jwt");
 
-            OAuthAuthorizeResult result = oauthService.handleKakaoCallback("code-zzz");
-
-            ArgumentCaptor<OAuthPending> captor = ArgumentCaptor.forClass(OAuthPending.class);
-            verify(pendingStore).save(captor.capture());
-            OAuthPending saved = captor.getValue();
+            OAuthLoginResult result = oauthService.loginWithKakao("code-2");
 
             assertAll(
-                    () -> assertEquals("auth-www", result.getAuthCode()),
-                    () -> assertTrue(result.isNeedsInfo()),
-                    () -> assertEquals("newuser@kakao.com", result.getEmail()),
-                    () -> assertEquals("김신규", result.getName()),
-                    () -> assertTrue(saved.isNewUser())
+                    () -> assertTrue(result.isNewUser()),
+                    () -> assertEquals("temp-jwt", result.getTempToken()),
+                    () -> assertEquals("new@k.com", result.getEmail()),
+                    () -> assertEquals("신규", result.getName())
             );
         }
     }
 
     @Nested
-    @DisplayName("2. consumeAuthCode()")
-    class ConsumeAuthCode {
+    @DisplayName("2. parseTempToken()")
+    class ParseTempToken {
 
         @Test
-        @DisplayName("TC-2-1. Store에 있음 → pending 반환")
-        void found() {
-            OAuthPending pending = OAuthPending.forNewUser(OAuthProvider.KAKAO, "kakao-1", "e@k.com", "name");
-            when(pendingStore.consume("auth-code")).thenReturn(Optional.of(pending));
+        @DisplayName("TC-2-1. 정상 → payload 반환")
+        void success() {
+            when(jwtTokenProvider.parseTempToken("temp-jwt")).thenReturn(claims);
+            when(claims.getSubject()).thenReturn("kakao-1");
+            when(claims.get("provider", String.class)).thenReturn("KAKAO");
+            when(claims.get("email", String.class)).thenReturn("e@k.com");
+            when(claims.get("name", String.class)).thenReturn("홍길동");
 
-            OAuthPending result = oauthService.consumeAuthCode("auth-code");
+            OAuthTempTokenPayload payload = oauthService.parseTempToken("temp-jwt");
 
-            assertEquals(pending, result);
-        }
-
-        @Test
-        @DisplayName("TC-2-2. 없음/만료 → OAUTH_INVALID_AUTHCODE")
-        void notFound() {
-            when(pendingStore.consume("invalid")).thenReturn(Optional.empty());
-
-            CustomException ex = assertThrows(CustomException.class,
-                    () -> oauthService.consumeAuthCode("invalid"));
-
-            assertEquals(ErrorCode.OAUTH_INVALID_AUTHCODE, ex.getErrorCode());
+            assertAll(
+                    () -> assertEquals("kakao-1", payload.getOauthId()),
+                    () -> assertEquals(OAuthProvider.KAKAO, payload.getProvider()),
+                    () -> assertEquals("e@k.com", payload.getEmail()),
+                    () -> assertEquals("홍길동", payload.getName())
+            );
         }
     }
 
@@ -129,7 +111,7 @@ class OAuthServiceTest {
     class Link {
 
         @Test
-        @DisplayName("TC-3-1. 정상 → save 호출, OAuthAccount 필드 일치")
+        @DisplayName("TC-3-1. 정상 → save 호출, 반환 OAuthAccount 필드 일치")
         void success() {
             when(oauthAccountRepository.save(any(OAuthAccount.class)))
                     .thenAnswer(inv -> inv.getArgument(0));
