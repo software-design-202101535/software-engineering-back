@@ -35,6 +35,21 @@ public class OAuthCompleteRequest {
     @AssertTrue(message = "개인정보처리방침에 동의해주세요.")
     private boolean privacyAgreed;
 
+    @SuppressWarnings("java:S107")
+    public static OAuthCompleteRequest of(String authCode, Role role, String email,
+                                           TeacherInfo teacherInfo, StudentInfo studentInfo, ParentInfo parentInfo) {
+        OAuthCompleteRequest request = new OAuthCompleteRequest();
+        request.authCode = authCode;
+        request.role = role;
+        request.email = email;
+        request.teacherInfo = teacherInfo;
+        request.studentInfo = studentInfo;
+        request.parentInfo = parentInfo;
+        request.termsAgreed = true;
+        request.privacyAgreed = true;
+        return request;
+    }
+
     @Getter
     public static class TeacherInfo {
         @NotBlank(message = "학교를 선택해주세요.")
@@ -45,6 +60,14 @@ public class OAuthCompleteRequest {
 
         @Min(value = 1, message = "반을 입력해주세요.")
         private int classNum;
+
+        public static TeacherInfo of(String school, int grade, int classNum) {
+            TeacherInfo info = new TeacherInfo();
+            info.school = school;
+            info.grade = grade;
+            info.classNum = classNum;
+            return info;
+        }
     }
 
     @Getter
@@ -60,6 +83,15 @@ public class OAuthCompleteRequest {
 
         @Min(value = 1, message = "번호를 입력해주세요.")
         private int number;
+
+        public static StudentInfo of(String school, int grade, int classNum, int number) {
+            StudentInfo info = new StudentInfo();
+            info.school = school;
+            info.grade = grade;
+            info.classNum = classNum;
+            info.number = number;
+            return info;
+        }
     }
 
     @Getter
@@ -67,5 +99,11 @@ public class OAuthCompleteRequest {
         @NotBlank(message = "자녀의 이메일을 입력해주세요.")
         @Email(message = "올바른 이메일 형식이 아닙니다.")
         private String childEmail;
+
+        public static ParentInfo of(String childEmail) {
+            ParentInfo info = new ParentInfo();
+            info.childEmail = childEmail;
+            return info;
+        }
     }
 }

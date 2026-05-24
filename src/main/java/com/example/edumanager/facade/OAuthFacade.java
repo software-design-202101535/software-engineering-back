@@ -4,6 +4,7 @@ import com.example.edumanager.domain.auth.dto.AuthTokens;
 import com.example.edumanager.domain.auth.dto.ChildSummary;
 import com.example.edumanager.domain.auth.dto.LoginResponse;
 import com.example.edumanager.domain.auth.service.AuthService;
+import com.example.edumanager.domain.oauth.client.OAuthProperties;
 import com.example.edumanager.domain.oauth.dto.OAuthAuthorizeResult;
 import com.example.edumanager.domain.oauth.dto.OAuthCompleteRequest;
 import com.example.edumanager.domain.oauth.dto.OAuthTokenRequest;
@@ -21,6 +22,9 @@ import com.example.edumanager.global.util.EnumConverter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.net.URI;
 
 @Component
 @RequiredArgsConstructor
@@ -31,9 +35,35 @@ public class OAuthFacade {
     private final StudentService studentService;
     private final TeacherService teacherService;
     private final AuthService authService;
+    private final OAuthProperties oauthProperties;
 
-    public OAuthAuthorizeResult handleKakaoCallback(String code) {
-        return oauthService.handleKakaoCallback(code);
+    public URI buildKakaoAuthorizeUrl() {
+        OAuthProperties.Kakao kakao = oauthProperties.getKakao();
+        return UriComponentsBuilder.fromUriString(kakao.getAuthorizationUri())
+                .queryParam("client_id", kakao.getClientId())
+                .queryParam("redirect_uri", kakao.getRedirectUri())
+                .queryParam("response_type", "code")
+                .build()
+                .toUri();
+    }
+
+    public URI buildFrontendRedirectUrl(String code) {
+        OAuthAuthorizeResult result = oauthService.handleKakaoCallback(code);
+
+        UriComponentsBuilder builder = UriComponentsBuilder
+                .fromUriString(oauthProperties.getKakao().getFrontendRedirectUri())
+                .queryParam("authCode", result.getAuthCode());
+
+        if (result.isNeedsInfo()) {
+            builder.queryParam("needsInfo", "true");
+            if (result.getEmail() != null) {
+                builder.queryParam("email", result.getEmail());
+            }
+            if (result.getName() != null) {
+                builder.queryParam("name", result.getName());
+            }
+        }
+        return builder.build().toUri();
     }
 
     @Transactional

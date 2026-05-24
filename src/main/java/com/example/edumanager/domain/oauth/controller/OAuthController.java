@@ -1,8 +1,6 @@
 package com.example.edumanager.domain.oauth.controller;
 
 import com.example.edumanager.domain.auth.dto.LoginResponse;
-import com.example.edumanager.domain.oauth.client.OAuthProperties;
-import com.example.edumanager.domain.oauth.dto.OAuthAuthorizeResult;
 import com.example.edumanager.domain.oauth.dto.OAuthCompleteRequest;
 import com.example.edumanager.domain.oauth.dto.OAuthTokenRequest;
 import com.example.edumanager.facade.OAuthFacade;
@@ -20,9 +18,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.util.UriComponentsBuilder;
-
-import java.net.URI;
 
 @RestController
 @RequestMapping("/api/auth/oauth")
@@ -30,40 +25,18 @@ import java.net.URI;
 public class OAuthController implements OAuthApiSpecification {
 
     private final OAuthFacade oauthFacade;
-    private final OAuthProperties oauthProperties;
 
     @GetMapping("/kakao/authorize")
     public ResponseEntity<Void> authorizeKakao() {
-        OAuthProperties.Kakao kakao = oauthProperties.getKakao();
-        String url = UriComponentsBuilder.fromUriString(kakao.getAuthorizationUri())
-                .queryParam("client_id", kakao.getClientId())
-                .queryParam("redirect_uri", kakao.getRedirectUri())
-                .queryParam("response_type", "code")
-                .build()
-                .toUriString();
-        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(url)).build();
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(oauthFacade.buildKakaoAuthorizeUrl())
+                .build();
     }
 
     @GetMapping("/kakao/callback")
     public ResponseEntity<Void> callbackKakao(@RequestParam("code") String code) {
-        OAuthAuthorizeResult result = oauthFacade.handleKakaoCallback(code);
-
-        UriComponentsBuilder builder = UriComponentsBuilder
-                .fromUriString(oauthProperties.getKakao().getFrontendRedirectUri())
-                .queryParam("authCode", result.getAuthCode());
-
-        if (result.isNeedsInfo()) {
-            builder.queryParam("needsInfo", "true");
-            if (result.getEmail() != null) {
-                builder.queryParam("email", result.getEmail());
-            }
-            if (result.getName() != null) {
-                builder.queryParam("name", result.getName());
-            }
-        }
-
         return ResponseEntity.status(HttpStatus.FOUND)
-                .location(URI.create(builder.build().toUriString()))
+                .location(oauthFacade.buildFrontendRedirectUrl(code))
                 .build();
     }
 

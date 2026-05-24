@@ -26,13 +26,12 @@ public class OAuthService {
         OAuthUserInfo info = kakaoOAuthClient.fetchUserInfo(code);
         OAuthProvider provider = OAuthProvider.KAKAO;
 
-        Optional<OAuthAccount> existing = oauthAccountRepository
-                .findByProviderAndOauthId(provider, info.getOauthId());
+        Optional<Long> existingUserId = oauthAccountRepository
+                .findUserIdByProviderAndOauthId(provider, info.getOauthId());
 
-        OAuthPending pending = existing
-                .map(account -> OAuthPending.forExistingUser(
-                        provider, info.getOauthId(), account.getUser().getId(),
-                        info.getEmail(), info.getName()))
+        OAuthPending pending = existingUserId
+                .map(userId -> OAuthPending.forExistingUser(
+                        provider, info.getOauthId(), userId, info.getEmail(), info.getName()))
                 .orElseGet(() -> OAuthPending.forNewUser(
                         provider, info.getOauthId(), info.getEmail(), info.getName()));
 
