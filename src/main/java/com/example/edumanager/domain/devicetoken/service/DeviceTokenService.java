@@ -30,6 +30,11 @@ public class DeviceTokenService {
         deviceTokenRepository.deleteByUserIdAndToken(userId, token);
     }
 
+    public void removeDeadTokens(List<String> tokens) {
+        if (tokens.isEmpty()) return;
+        deviceTokenRepository.deleteAllByTokenIn(tokens);
+    }
+
     public List<String> findTokensByUserIds(List<Long> userIds) {
         if (userIds.isEmpty()) return List.of();
         return deviceTokenRepository.findAllByUserIdIn(userIds).stream()
