@@ -13,6 +13,7 @@ import com.example.edumanager.domain.teacher.service.TeacherService;
 import com.example.edumanager.domain.user.entity.Role;
 import com.example.edumanager.domain.user.entity.User;
 import com.example.edumanager.domain.user.service.UserService;
+import com.example.edumanager.domain.notification.event.FeedbackVisibilityChangedEvent;
 import com.example.edumanager.global.exception.CustomException;
 import com.example.edumanager.global.exception.ErrorCode;
 import com.example.edumanager.global.security.UserDetailsImpl;
@@ -22,9 +23,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -41,6 +44,7 @@ class FeedbackOperationFacadeTest {
     @Mock StudentService studentService;
     @Mock TeacherService teacherService;
     @Mock UserService userService;
+    @Mock ApplicationEventPublisher eventPublisher;
 
     @InjectMocks FeedbackOperationFacade facade;
 
@@ -341,6 +345,103 @@ class FeedbackOperationFacadeTest {
                     () -> assertEquals(ErrorCode.FEEDBACK_NOT_FOUND, ex.getErrorCode()),
                     () -> verify(feedbackService, never()).updateVisibility(any(), any())
             );
+        }
+    }
+
+    @Nested
+    @DisplayName("4-P. updateVisibility() publishEvent 분기")
+    class UpdateVisibilityPublish {
+
+        private UserDetailsImpl teacher() {
+            return UserDetailsImpl.create(10L, Role.TEACHER);
+        }
+
+        private void stubAuthorAndUpdate(boolean wasStu, boolean wasPar, boolean nowStu, boolean nowPar) {
+            when(feedbackService.getByIdAndStudentId(5L, 2L)).thenReturn(feedback);
+            stubAuthor(10L);
+            when(feedback.isStudentVisible()).thenReturn(wasStu, nowStu);
+            when(feedback.isParentVisible()).thenReturn(wasPar, nowPar);
+            when(feedbackService.updateVisibility(eq(feedback), any())).thenReturn(feedback);
+        }
+
+        private void stubFeedbackForEvent() {
+            when(feedback.getId()).thenReturn(5L);
+            when(feedback.getCategory()).thenReturn(FeedbackCategory.GRADE);
+        }
+
+        private FeedbackVisibilityChangedEvent capturePublished() {
+            ArgumentCaptor<FeedbackVisibilityChangedEvent> captor =
+                    ArgumentCaptor.forClass(FeedbackVisibilityChangedEvent.class);
+            verify(eventPublisher).publishEvent(captor.capture());
+            return captor.getValue();
+        }
+
+        @Test
+        @DisplayName("TC-4P-1. 학생/학부모 둘 다 false→true → publish (s=true, p=true)")
+        void bothNewlyShared() {
+            stubAuthorAndUpdate(false, false, true, true);
+            stubFeedbackForEvent();
+
+            facade.updateVisibility(2L, 5L, UpdateFeedbackVisibilityRequest.of(true, true), teacher());
+
+            FeedbackVisibilityChangedEvent event = capturePublished();
+            assertAll(
+                    () -> assertEquals(5L, event.getFeedbackId()),
+                    () -> assertEquals(2L, event.getStudentId()),
+                    () -> assertTrue(event.isNewlyVisibleToStudent()),
+                    () -> assertTrue(event.isNewlyVisibleToParent()),
+                    () -> assertEquals("GRADE", event.getCategoryName())
+            );
+        }
+
+        @Test
+        @DisplayName("TC-4P-2. 학생만 false→true, 학부모 false→false → publish (s=true, p=false)")
+        void onlyStudentNewlyShared() {
+            stubAuthorAndUpdate(false, false, true, false);
+            stubFeedbackForEvent();
+
+            facade.updateVisibility(2L, 5L, UpdateFeedbackVisibilityRequest.of(true, false), teacher());
+
+            FeedbackVisibilityChangedEvent event = capturePublished();
+            assertAll(
+                    () -> assertTrue(event.isNewlyVisibleToStudent()),
+                    () -> assertFalse(event.isNewlyVisibleToParent())
+            );
+        }
+
+        @Test
+        @DisplayName("TC-4P-3. 학부모만 false→true → publish (s=false, p=true)")
+        void onlyParentNewlyShared() {
+            stubAuthorAndUpdate(false, false, false, true);
+            stubFeedbackForEvent();
+
+            facade.updateVisibility(2L, 5L, UpdateFeedbackVisibilityRequest.of(false, true), teacher());
+
+            FeedbackVisibilityChangedEvent event = capturePublished();
+            assertAll(
+                    () -> assertFalse(event.isNewlyVisibleToStudent()),
+                    () -> assertTrue(event.isNewlyVisibleToParent())
+            );
+        }
+
+        @Test
+        @DisplayName("TC-4P-4. 이미 둘 다 공개됨 (true→true) → publish 없음")
+        void alreadyVisibleNoPublish() {
+            stubAuthorAndUpdate(true, true, true, true);
+
+            facade.updateVisibility(2L, 5L, UpdateFeedbackVisibilityRequest.of(true, true), teacher());
+
+            verify(eventPublisher, never()).publishEvent(any());
+        }
+
+        @Test
+        @DisplayName("TC-4P-5. 가시성 축소 (true→false) → publish 없음")
+        void visibilityShrunkNoPublish() {
+            stubAuthorAndUpdate(true, true, false, false);
+
+            facade.updateVisibility(2L, 5L, UpdateFeedbackVisibilityRequest.of(false, false), teacher());
+
+            verify(eventPublisher, never()).publishEvent(any());
         }
     }
 

@@ -2,7 +2,9 @@ package com.example.edumanager.facade;
 
 import com.example.edumanager.domain.grade.dto.BatchGradeRequest;
 import com.example.edumanager.domain.grade.entity.ExamType;
+import com.example.edumanager.domain.grade.entity.Grade;
 import com.example.edumanager.domain.grade.service.GradeService;
+import com.example.edumanager.domain.notification.event.GradeBatchProcessedEvent;
 import com.example.edumanager.domain.student.entity.StudentProfile;
 import com.example.edumanager.domain.student.service.StudentService;
 import com.example.edumanager.domain.teacher.entity.TeacherProfile;
@@ -17,9 +19,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 
@@ -34,6 +38,7 @@ class GradeOperationFacadeTest {
     @Mock GradeService gradeService;
     @Mock StudentService studentService;
     @Mock TeacherService teacherService;
+    @Mock ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     GradeOperationFacade facade;
@@ -233,8 +238,8 @@ class GradeOperationFacadeTest {
                 "2025-1", ExamType.MIDTERM, List.of(), List.of(), List.of());
 
         @Test
-        @DisplayName("TC-3-1. 담임 교사")
-        void homeroomTeacher() {
+        @DisplayName("TC-3-1. 담임 교사, 처리 결과 0건 → publish 없음")
+        void homeroomTeacherEmptyGrades() {
             UserDetailsImpl teacher = UserDetailsImpl.create(10L, Role.TEACHER);
             when(studentService.getById(2L)).thenReturn(student);
             stubStudent();
@@ -243,7 +248,39 @@ class GradeOperationFacadeTest {
 
             facade.batchProcess(2L, teacher, request);
 
-            verify(gradeService).batchProcess(student, request);
+            assertAll(
+                    () -> verify(gradeService).batchProcess(student, request),
+                    () -> verify(eventPublisher, never()).publishEvent(any())
+            );
+        }
+
+        @Test
+        @DisplayName("TC-3-2. 처리 결과 N건 → GradeBatchProcessedEvent(studentId, N) publish 1회")
+        void publishesEventWithCount() {
+            UserDetailsImpl teacher = UserDetailsImpl.create(10L, Role.TEACHER);
+            when(studentService.getById(2L)).thenReturn(student);
+            stubStudent();
+            stubHomeroomTeacher(10L);
+            Grade g1 = stubGradeForResponse();
+            Grade g2 = stubGradeForResponse();
+            Grade g3 = stubGradeForResponse();
+            when(gradeService.batchProcess(student, request)).thenReturn(List.of(g1, g2, g3));
+
+            facade.batchProcess(2L, teacher, request);
+
+            ArgumentCaptor<GradeBatchProcessedEvent> captor =
+                    ArgumentCaptor.forClass(GradeBatchProcessedEvent.class);
+            verify(eventPublisher).publishEvent(captor.capture());
+            assertAll(
+                    () -> assertEquals(2L, captor.getValue().getStudentId()),
+                    () -> assertEquals(3, captor.getValue().getCount())
+            );
+        }
+
+        private Grade stubGradeForResponse() {
+            Grade grade = mock(Grade.class);
+            when(grade.getSubject()).thenReturn(com.example.edumanager.domain.grade.entity.Subject.KOREAN);
+            return grade;
         }
     }
 

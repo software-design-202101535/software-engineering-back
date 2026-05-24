@@ -168,6 +168,19 @@ class NotificationEventListenerTest {
         }
 
         @Test
+        @DisplayName("TC-2-5. 학부모만 신규 공개이지만 학부모 0명 → createAll/fcm 모두 미호출")
+        void parentOnlyButNoParents() {
+            when(studentService.getParentsByStudentId(10L)).thenReturn(List.of());
+
+            listener.onFeedbackVisibilityChanged(FeedbackVisibilityChangedEvent.of(
+                    5L, 10L, false, true, "ATTITUDE"));
+
+            verify(notificationService, never()).createAll(any(), any(), any(), any(), anyLong(), any());
+            verify(fcmClient, never()).send(any(), anyString(), anyString());
+            verify(studentService, never()).getById(anyLong());
+        }
+
+        @Test
         @DisplayName("TC-2-4. 학부모만 신규 공개 → 학부모들만 알림+push (학생 조회 안 함)")
         void parentOnly() {
             when(studentService.getParentsByStudentId(10L)).thenReturn(List.of(parentUser1, parentUser2));

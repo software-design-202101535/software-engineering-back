@@ -76,6 +76,41 @@ class DeviceTokenRepositoryTest extends AbstractRepositoryIntegrationTest {
         assertThat(deviceTokenRepository.findByToken("other-token")).isPresent();
     }
 
+    @Test
+    @DisplayName("TC-D-4. reassign 후 flush → DB의 user_id가 새 owner로 변경됨 (dirty checking 검증)")
+    void reassignDirtyChecking() {
+        User original = persistUser("orig@test.com");
+        User newOwner = persistUser("new@test.com");
+        DeviceToken token = deviceTokenRepository.saveAndFlush(DeviceToken.of(original, "tok-reassign"));
+
+        token.reassign(newOwner);
+        em.flush();
+        em.clear();
+
+        DeviceToken reloaded = deviceTokenRepository.findByToken("tok-reassign").orElseThrow();
+        assertThat(reloaded.getUser().getId()).isEqualTo(newOwner.getId());
+    }
+
+    @Test
+    @DisplayName("TC-D-5. deleteAllByTokenIn — 지정 토큰만 삭제, 노이즈 토큰은 남음")
+    void deleteAllByTokenIn() {
+        User user = persistUser("u@test.com");
+        em.persist(DeviceToken.of(user, "keep-1"));
+        em.persist(DeviceToken.of(user, "dead-1"));
+        em.persist(DeviceToken.of(user, "dead-2"));
+        em.persist(DeviceToken.of(user, "keep-2"));
+        em.flush();
+
+        deviceTokenRepository.deleteAllByTokenIn(List.of("dead-1", "dead-2"));
+        em.flush();
+        em.clear();
+
+        assertThat(deviceTokenRepository.findByToken("dead-1")).isEmpty();
+        assertThat(deviceTokenRepository.findByToken("dead-2")).isEmpty();
+        assertThat(deviceTokenRepository.findByToken("keep-1")).isPresent();
+        assertThat(deviceTokenRepository.findByToken("keep-2")).isPresent();
+    }
+
     private User persistUser(String email) {
         User user = User.of(email, "encoded", "name", Role.STUDENT);
         em.persist(user);

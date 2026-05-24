@@ -20,6 +20,14 @@ public class NotificationResponse {
     private NotificationResponse() {
     }
 
+    public static NotificationResponse ofForTest(Long id, String type, boolean isRead) {
+        NotificationResponse response = new NotificationResponse();
+        response.id = id;
+        response.type = type;
+        response.isRead = isRead;
+        return response;
+    }
+
     public static NotificationResponse of(Notification notification) {
         NotificationResponse response = new NotificationResponse();
         response.id = notification.getId();
