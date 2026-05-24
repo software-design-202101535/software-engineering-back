@@ -9,6 +9,7 @@ import com.example.edumanager.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -30,6 +31,8 @@ public class DeviceTokenService {
         deviceTokenRepository.deleteByUserIdAndToken(userId, token);
     }
 
+    // afterCommit hook(FcmClient)에서 호출되므로 자체 트랜잭션이 필요해 예외적으로 @Transactional 부여
+    @Transactional
     public void removeDeadTokens(List<String> tokens) {
         if (tokens.isEmpty()) return;
         deviceTokenRepository.deleteAllByTokenIn(tokens);

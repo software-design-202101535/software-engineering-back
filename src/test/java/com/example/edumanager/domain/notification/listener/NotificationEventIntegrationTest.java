@@ -1,5 +1,7 @@
 package com.example.edumanager.domain.notification.listener;
 
+import com.example.edumanager.domain.devicetoken.entity.DeviceToken;
+import com.example.edumanager.domain.devicetoken.repository.DeviceTokenRepository;
 import com.example.edumanager.domain.notification.entity.Notification;
 import com.example.edumanager.domain.notification.entity.NotificationType;
 import com.example.edumanager.domain.notification.event.GradeBatchProcessedEvent;
@@ -39,6 +41,7 @@ class NotificationEventIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired ApplicationEventPublisher eventPublisher;
     @Autowired NotificationRepository notificationRepository;
+    @Autowired DeviceTokenRepository deviceTokenRepository;
     @Autowired PlatformTransactionManager transactionManager;
 
     @MockitoBean FcmClient fcmClient;
@@ -47,6 +50,7 @@ class NotificationEventIntegrationTest extends AbstractIntegrationTest {
     @DisplayName("TC-E-1. 트랜잭션 commit 시 AFTER_COMMIT listener 호출 → DB 알림 생성 + FCM send 호출")
     void afterCommit_onCommit_createsNotificationsAndPushes() {
         StudentProfile student = insertStudent("e1@test.com", School.SUNRIN_HIGH_SCHOOL, 1, 1, 1);
+        deviceTokenRepository.save(DeviceToken.of(student.getUser(), "stu-token"));
 
         TransactionTemplate tt = new TransactionTemplate(transactionManager);
         tt.executeWithoutResult(status ->
@@ -57,7 +61,7 @@ class NotificationEventIntegrationTest extends AbstractIntegrationTest {
         assertThat(notifications).hasSize(1);
         assertThat(notifications.get(0).getType()).isEqualTo(NotificationType.GRADE_UPDATED);
         assertThat(notifications.get(0).getMessage()).isEqualTo("성적 3건이 등록/수정되었습니다.");
-        verify(fcmClient).send(any(), eq("성적이 업데이트되었습니다"), eq("성적 3건이 등록/수정되었습니다."));
+        verify(fcmClient).send(List.of("stu-token"), "성적이 업데이트되었습니다", "성적 3건이 등록/수정되었습니다.");
     }
 
     @Test

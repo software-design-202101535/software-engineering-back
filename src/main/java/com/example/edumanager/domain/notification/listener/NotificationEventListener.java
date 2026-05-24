@@ -18,6 +18,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,13 +67,27 @@ public class NotificationEventListener {
     private void notifyAll(List<User> recipients, NotificationType type, String title, String body,
                            Long referenceId, ReferenceType referenceType) {
         notificationService.createAll(recipients, type, title, body, referenceId, referenceType);
-        pushToDevices(recipients, title, body);
+        schedulePushAfterCommit(recipients, title, body);
     }
 
-    private void pushToDevices(List<User> recipients, String title, String body) {
+    private void schedulePushAfterCommit(List<User> recipients, String title, String body) {
+        List<String> tokens = resolveTokens(recipients);
+        if (tokens.isEmpty()) return;
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            fcmClient.send(tokens, title, body);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                fcmClient.send(tokens, title, body);
+            }
+        });
+    }
+
+    private List<String> resolveTokens(List<User> recipients) {
         List<Long> userIds = recipients.stream().map(User::getId).toList();
-        List<String> tokens = deviceTokenService.findTokensByUserIds(userIds);
-        fcmClient.send(tokens, title, body);
+        return deviceTokenService.findTokensByUserIds(userIds);
     }
 
     private List<User> collectStudentAndParents(Long studentId) {
