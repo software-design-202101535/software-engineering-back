@@ -5,6 +5,8 @@ import com.example.edumanager.domain.devicetoken.repository.DeviceTokenRepositor
 import com.example.edumanager.domain.user.entity.Role;
 import com.example.edumanager.domain.user.entity.User;
 import com.example.edumanager.domain.user.service.UserService;
+import com.example.edumanager.global.exception.CustomException;
+import com.example.edumanager.global.exception.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -13,12 +15,14 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -41,17 +45,17 @@ class DeviceTokenServiceTest {
     class Register {
 
         @Test
-        @DisplayName("TC-1-1. 신규 토큰 → save 호출, 새 DeviceToken 반환")
+        @DisplayName("TC-1-1. 신규 토큰 → saveAndFlush 호출, 새 DeviceToken 반환")
         void newToken() {
             User user = User.of("a@b.com", "pw", "홍길동", Role.STUDENT);
             when(userService.getById(1L)).thenReturn(user);
             when(deviceTokenRepository.findByToken("new-token")).thenReturn(Optional.empty());
-            when(deviceTokenRepository.save(any(DeviceToken.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(deviceTokenRepository.saveAndFlush(any(DeviceToken.class))).thenAnswer(inv -> inv.getArgument(0));
 
             DeviceToken result = deviceTokenService.register(1L, "new-token");
 
             ArgumentCaptor<DeviceToken> captor = ArgumentCaptor.forClass(DeviceToken.class);
-            verify(deviceTokenRepository).save(captor.capture());
+            verify(deviceTokenRepository).saveAndFlush(captor.capture());
             assertAll(
                     () -> assertEquals(user, captor.getValue().getUser()),
                     () -> assertEquals("new-token", captor.getValue().getToken()),
@@ -61,7 +65,7 @@ class DeviceTokenServiceTest {
         }
 
         @Test
-        @DisplayName("TC-1-2. 기존 토큰 → 소유자 reassign, save 미호출")
+        @DisplayName("TC-1-2. 기존 토큰 → 소유자 reassign, saveAndFlush 미호출")
         void existingTokenReassigned() {
             User newOwner = User.of("new@b.com", "pw", "신유저", Role.STUDENT);
             DeviceToken existing = mock(DeviceToken.class);
@@ -72,9 +76,24 @@ class DeviceTokenServiceTest {
 
             assertAll(
                     () -> verify(existing).reassign(newOwner),
-                    () -> verify(deviceTokenRepository, never()).save(any()),
+                    () -> verify(deviceTokenRepository, never()).saveAndFlush(any()),
                     () -> assertEquals(existing, result)
             );
+        }
+
+        @Test
+        @DisplayName("TC-1-3. 동시 insert로 unique 위반 → DEVICE_TOKEN_CONCURRENT_REGISTER 변환")
+        void concurrentInsertConflict() {
+            User user = User.of("a@b.com", "pw", "홍길동", Role.STUDENT);
+            when(userService.getById(1L)).thenReturn(user);
+            when(deviceTokenRepository.findByToken("race-token")).thenReturn(Optional.empty());
+            when(deviceTokenRepository.saveAndFlush(any(DeviceToken.class)))
+                    .thenThrow(new DataIntegrityViolationException("duplicate"));
+
+            CustomException ex = assertThrows(CustomException.class,
+                    () -> deviceTokenService.register(1L, "race-token"));
+
+            assertEquals(ErrorCode.DEVICE_TOKEN_CONCURRENT_REGISTER, ex.getErrorCode());
         }
     }
 

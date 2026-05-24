@@ -4,7 +4,10 @@ import com.example.edumanager.domain.devicetoken.entity.DeviceToken;
 import com.example.edumanager.domain.devicetoken.repository.DeviceTokenRepository;
 import com.example.edumanager.domain.user.entity.User;
 import com.example.edumanager.domain.user.service.UserService;
+import com.example.edumanager.global.exception.CustomException;
+import com.example.edumanager.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,7 +23,7 @@ public class DeviceTokenService {
         User user = userService.getById(userId);
         return deviceTokenRepository.findByToken(token)
                 .map(existing -> reassignOwner(existing, user))
-                .orElseGet(() -> createNew(user, token));
+                .orElseGet(() -> createNewOrRejectConcurrent(user, token));
     }
 
     public void unregister(Long userId, String token) {
@@ -39,7 +42,11 @@ public class DeviceTokenService {
         return existing;
     }
 
-    private DeviceToken createNew(User user, String token) {
-        return deviceTokenRepository.save(DeviceToken.of(user, token));
+    private DeviceToken createNewOrRejectConcurrent(User user, String token) {
+        try {
+            return deviceTokenRepository.saveAndFlush(DeviceToken.of(user, token));
+        } catch (DataIntegrityViolationException e) {
+            throw new CustomException(ErrorCode.DEVICE_TOKEN_CONCURRENT_REGISTER);
+        }
     }
 }
