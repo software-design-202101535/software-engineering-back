@@ -1,7 +1,7 @@
 package com.example.edumanager.domain.devicetoken.controller;
 
 import com.example.edumanager.domain.devicetoken.dto.RegisterDeviceTokenRequest;
-import com.example.edumanager.domain.devicetoken.service.DeviceTokenService;
+import com.example.edumanager.facade.DeviceTokenFacade;
 import com.example.edumanager.global.security.UserDetailsImpl;
 import com.example.edumanager.global.swagger.DeviceTokenApiSpecification;
 import jakarta.validation.Valid;
@@ -20,13 +20,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class DeviceTokenController implements DeviceTokenApiSpecification {
 
-    private final DeviceTokenService deviceTokenService;
+    private final DeviceTokenFacade deviceTokenFacade;
 
     @PostMapping
     public ResponseEntity<Void> register(
             @RequestBody @Valid RegisterDeviceTokenRequest request,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
-        deviceTokenService.register(userDetails.getUserId(), request.getToken());
+        deviceTokenFacade.register(request, userDetails);
         return ResponseEntity.noContent().build();
     }
 
@@ -34,7 +34,7 @@ public class DeviceTokenController implements DeviceTokenApiSpecification {
     public ResponseEntity<Void> unregister(
             @PathVariable String token,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
-        deviceTokenService.unregister(userDetails.getUserId(), token);
+        deviceTokenFacade.unregister(token, userDetails);
         return ResponseEntity.noContent().build();
     }
 }

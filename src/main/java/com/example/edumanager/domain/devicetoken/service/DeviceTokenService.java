@@ -6,7 +6,6 @@ import com.example.edumanager.domain.user.entity.User;
 import com.example.edumanager.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -17,7 +16,6 @@ public class DeviceTokenService {
     private final DeviceTokenRepository deviceTokenRepository;
     private final UserService userService;
 
-    @Transactional
     public DeviceToken register(Long userId, String token) {
         User user = userService.getById(userId);
         return deviceTokenRepository.findByToken(token)
@@ -25,12 +23,10 @@ public class DeviceTokenService {
                 .orElseGet(() -> createNew(user, token));
     }
 
-    @Transactional
     public void unregister(Long userId, String token) {
         deviceTokenRepository.deleteByUserIdAndToken(userId, token);
     }
 
-    @Transactional(readOnly = true)
     public List<String> findTokensByUserIds(List<Long> userIds) {
         if (userIds.isEmpty()) return List.of();
         return deviceTokenRepository.findAllByUserIdIn(userIds).stream()

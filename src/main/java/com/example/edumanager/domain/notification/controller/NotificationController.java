@@ -1,7 +1,7 @@
 package com.example.edumanager.domain.notification.controller;
 
 import com.example.edumanager.domain.notification.dto.NotificationResponse;
-import com.example.edumanager.domain.notification.service.NotificationService;
+import com.example.edumanager.facade.NotificationFacade;
 import com.example.edumanager.global.security.UserDetailsImpl;
 import com.example.edumanager.global.swagger.NotificationApiSpecification;
 import lombok.RequiredArgsConstructor;
@@ -20,30 +20,26 @@ import java.util.List;
 @RequiredArgsConstructor
 public class NotificationController implements NotificationApiSpecification {
 
-    private final NotificationService notificationService;
+    private final NotificationFacade notificationFacade;
 
     @GetMapping
     public ResponseEntity<List<NotificationResponse>> getMyNotifications(
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
-        return ResponseEntity.ok(
-                notificationService.findByUserId(userDetails.getUserId()).stream()
-                        .map(NotificationResponse::of)
-                        .toList()
-        );
+        return ResponseEntity.ok(notificationFacade.getMyNotifications(userDetails));
     }
 
     @PatchMapping("/{notificationId}/read")
     public ResponseEntity<Void> markAsRead(
             @PathVariable Long notificationId,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
-        notificationService.markAsRead(notificationId, userDetails.getUserId());
+        notificationFacade.markAsRead(notificationId, userDetails);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/read-all")
     public ResponseEntity<Void> markAllAsRead(
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
-        notificationService.markAllAsRead(userDetails.getUserId());
+        notificationFacade.markAllAsRead(userDetails);
         return ResponseEntity.noContent().build();
     }
 }
