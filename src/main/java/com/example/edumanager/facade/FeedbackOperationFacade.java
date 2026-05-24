@@ -72,15 +72,19 @@ public class FeedbackOperationFacade {
         boolean wasVisibleToStudent = feedback.isStudentVisible();
         boolean wasVisibleToParent = feedback.isParentVisible();
         Feedback updated = feedbackService.updateVisibility(feedback, request);
+        publishIfNewlyShared(updated, studentId, wasVisibleToStudent, wasVisibleToParent);
+        return FeedbackResponse.of(updated);
+    }
+
+    private void publishIfNewlyShared(Feedback updated, Long studentId,
+                                      boolean wasVisibleToStudent, boolean wasVisibleToParent) {
         boolean newlyVisibleToStudent = !wasVisibleToStudent && updated.isStudentVisible();
         boolean newlyVisibleToParent = !wasVisibleToParent && updated.isParentVisible();
-        if (newlyVisibleToStudent || newlyVisibleToParent) {
-            eventPublisher.publishEvent(FeedbackVisibilityChangedEvent.of(
-                    updated.getId(), studentId,
-                    newlyVisibleToStudent, newlyVisibleToParent,
-                    updated.getCategory().name()));
-        }
-        return FeedbackResponse.of(updated);
+        if (!newlyVisibleToStudent && !newlyVisibleToParent) return;
+        eventPublisher.publishEvent(FeedbackVisibilityChangedEvent.of(
+                updated.getId(), studentId,
+                newlyVisibleToStudent, newlyVisibleToParent,
+                updated.getCategory().name()));
     }
 
     @Transactional
