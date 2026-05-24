@@ -39,6 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -164,9 +165,14 @@ class OAuthFacadeTest {
 
             when(oauthService.consumeAuthCode("auth-1")).thenReturn(pending);
             when(userService.getById(7L)).thenReturn(user);
+            when(user.getId()).thenReturn(7L);
+            when(user.getEmail()).thenReturn("t@k.com");
+            when(user.getName()).thenReturn("교사");
             when(user.getRole()).thenReturn(Role.TEACHER);
             when(authService.issueTokens(user)).thenReturn(tokens);
-            when(teacherService.getProfileByUserId(any())).thenReturn(teacherProfile);
+            when(tokens.getAccessToken()).thenReturn("access-x");
+            when(tokens.getRefreshToken()).thenReturn("refresh-x");
+            when(teacherService.getProfileByUserId(7L)).thenReturn(teacherProfile);
 
             LoginResponse response = facade.token(request);
 
@@ -175,7 +181,14 @@ class OAuthFacadeTest {
             order.verify(userService).getById(7L);
             order.verify(authService).issueTokens(user);
 
-            assertEquals(LoginResponse.ofTeacher(user, tokens, teacherProfile).getUserId(), response.getUserId());
+            assertAll(
+                    () -> assertEquals(7L, response.getUserId()),
+                    () -> assertEquals("t@k.com", response.getEmail()),
+                    () -> assertEquals("교사", response.getName()),
+                    () -> assertEquals("TEACHER", response.getRole()),
+                    () -> assertEquals("access-x", response.getAccessToken()),
+                    () -> assertEquals("refresh-x", response.getRefreshToken())
+            );
         }
 
         @Test
@@ -352,6 +365,64 @@ class OAuthFacadeTest {
             facade.complete(request);
 
             verify(userService).registerOAuthUser("request@k.com", "n", Role.TEACHER);
+        }
+
+        @Test
+        @DisplayName("TC-4-9. pending.email 빈문자열 + request.email 있음 → request 값 사용 (isBlank 분기)")
+        void emailFromRequestWhenPendingBlank() {
+            OAuthCompleteRequest request = OAuthCompleteRequest.of(
+                    "auth-1", Role.TEACHER, "request@k.com",
+                    OAuthCompleteRequest.TeacherInfo.of("SUNRIN_HIGH_SCHOOL", 1, 1), null, null);
+            OAuthPending pending = OAuthPending.forNewUser(OAuthProvider.KAKAO, "kakao-1", "", "n");
+
+            when(oauthService.consumeAuthCode("auth-1")).thenReturn(pending);
+            when(userService.registerOAuthUser("request@k.com", "n", Role.TEACHER)).thenReturn(user);
+            when(user.getRole()).thenReturn(Role.TEACHER);
+            when(authService.issueTokens(user)).thenReturn(tokens);
+            when(teacherService.getProfileByUserId(any())).thenReturn(teacherProfile);
+
+            facade.complete(request);
+
+            verify(userService).registerOAuthUser("request@k.com", "n", Role.TEACHER);
+        }
+
+        @Test
+        @DisplayName("TC-4-10. pending.email 공백 + request.email 빈문자열 → OAUTH_EMAIL_REQUIRED")
+        void emailRequiredWhenBothBlank() {
+            OAuthCompleteRequest request = OAuthCompleteRequest.of(
+                    "auth-1", Role.TEACHER, "",
+                    OAuthCompleteRequest.TeacherInfo.of("SUNRIN_HIGH_SCHOOL", 1, 1), null, null);
+            OAuthPending pending = OAuthPending.forNewUser(OAuthProvider.KAKAO, "kakao-1", "   ", "n");
+            when(oauthService.consumeAuthCode("auth-1")).thenReturn(pending);
+
+            CustomException ex = assertThrows(CustomException.class, () -> facade.complete(request));
+
+            assertAll(
+                    () -> assertEquals(ErrorCode.OAUTH_EMAIL_REQUIRED, ex.getErrorCode()),
+                    () -> verify(userService, never()).registerOAuthUser(any(), any(), any())
+            );
+        }
+
+        @Test
+        @DisplayName("TC-4-11. registerOAuthUser 중복 throw → link/createProfile/issueTokens never (partial-failure 가드)")
+        void registerDuplicatedRollback() {
+            OAuthCompleteRequest request = OAuthCompleteRequest.of(
+                    "auth-1", Role.TEACHER, null,
+                    OAuthCompleteRequest.TeacherInfo.of("SUNRIN_HIGH_SCHOOL", 1, 1), null, null);
+            OAuthPending pending = OAuthPending.forNewUser(OAuthProvider.KAKAO, "kakao-1", "dup@k.com", "n");
+
+            when(oauthService.consumeAuthCode("auth-1")).thenReturn(pending);
+            when(userService.registerOAuthUser("dup@k.com", "n", Role.TEACHER))
+                    .thenThrow(new CustomException(ErrorCode.DUPLICATED_USER));
+
+            CustomException ex = assertThrows(CustomException.class, () -> facade.complete(request));
+
+            assertAll(
+                    () -> assertEquals(ErrorCode.DUPLICATED_USER, ex.getErrorCode()),
+                    () -> verify(oauthService, never()).link(any(), any(), any()),
+                    () -> verify(teacherService, never()).createProfile(any(), any(), anyInt(), anyInt()),
+                    () -> verify(authService, never()).issueTokens(any())
+            );
         }
     }
 }
