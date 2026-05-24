@@ -14,6 +14,8 @@ import com.example.edumanager.global.fcm.FcmClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
@@ -30,6 +32,7 @@ public class NotificationEventListener {
     private final FcmClient fcmClient;
 
     @Async(AsyncConfig.NOTIFICATION_EXECUTOR)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onGradeBatchProcessed(GradeBatchProcessedEvent event) {
         List<User> recipients = collectStudentAndParents(event.getStudentId());
@@ -44,6 +47,7 @@ public class NotificationEventListener {
     }
 
     @Async(AsyncConfig.NOTIFICATION_EXECUTOR)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onFeedbackVisibilityChanged(FeedbackVisibilityChangedEvent event) {
         if (!event.hasRecipient()) return;
