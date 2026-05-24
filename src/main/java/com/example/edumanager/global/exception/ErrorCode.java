@@ -62,7 +62,10 @@ public enum ErrorCode {
 
     // 데이터베이스
     DATABASE_CONNECTION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 500, "일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요."),
-    DATA_INTEGRITY_VIOLATION(HttpStatus.CONFLICT, 409, "이미 존재하는 데이터이거나 처리할 수 없는 요청입니다.");
+    DATA_INTEGRITY_VIOLATION(HttpStatus.CONFLICT, 409, "이미 존재하는 데이터이거나 처리할 수 없는 요청입니다."),
+
+    // OAuth
+    OAUTH_PROVIDER_ERROR(HttpStatus.BAD_GATEWAY, 502, "OAuth 제공자와의 통신에 실패했습니다.");
 
     private final HttpStatus httpStatus;
     private final Integer code;
