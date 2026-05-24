@@ -60,6 +60,9 @@ public enum ErrorCode {
     GRADE_ALREADY_EXISTS(HttpStatus.CONFLICT, 409, "이미 등록된 성적입니다."),
     GRADE_ACCESS_DENIED(HttpStatus.FORBIDDEN, 403, "해당 성적에 접근할 권한이 없습니다."),
 
+    // 알림
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, 404, "해당 알림을 찾을 수 없습니다."),
+
     // 데이터베이스
     DATABASE_CONNECTION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 500, "일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요."),
     DATA_INTEGRITY_VIOLATION(HttpStatus.CONFLICT, 409, "이미 존재하는 데이터이거나 처리할 수 없는 요청입니다.");
