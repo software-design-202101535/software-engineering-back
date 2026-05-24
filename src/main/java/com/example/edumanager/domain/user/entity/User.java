@@ -24,7 +24,7 @@ public class User {
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
-    @Column(nullable = false, length = 255)
+    @Column(length = 255)
     private String password;
 
     @Column(nullable = false, length = 50)
@@ -60,6 +60,19 @@ public class User {
         user.name = name;
         user.role = Role.PARENT;
         return user;
+    }
+
+    public static User ofOAuth(String email, String name, Role role) {
+        User user = new User();
+        user.email = email;
+        user.password = null;
+        user.name = name;
+        user.role = role;
+        return user;
+    }
+
+    public boolean isOAuthUser() {
+        return this.password == null;
     }
 
     public void updateName(String name) {
