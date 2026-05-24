@@ -5,6 +5,7 @@ import com.example.edumanager.domain.grade.dto.GradeResponse;
 import com.example.edumanager.domain.grade.entity.ExamType;
 import com.example.edumanager.domain.grade.entity.Grade;
 import com.example.edumanager.domain.grade.service.GradeService;
+import com.example.edumanager.domain.notification.event.GradeBatchProcessedEvent;
 import com.example.edumanager.domain.student.entity.StudentProfile;
 import com.example.edumanager.domain.student.service.StudentService;
 import com.example.edumanager.domain.teacher.entity.TeacherProfile;
@@ -14,6 +15,7 @@ import com.example.edumanager.global.exception.CustomException;
 import com.example.edumanager.global.exception.ErrorCode;
 import com.example.edumanager.global.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +28,7 @@ public class GradeOperationFacade {
     private final GradeService gradeService;
     private final StudentService studentService;
     private final TeacherService teacherService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public List<GradeResponse> getGrades(Long studentId, UserDetailsImpl userDetails,
@@ -43,6 +46,9 @@ public class GradeOperationFacade {
         StudentProfile student = studentService.getById(studentId);
         checkHomeroomAccess(userDetails.getUserId(), student);
         List<Grade> grades = gradeService.batchProcess(student, request);
+        if (!grades.isEmpty()) {
+            eventPublisher.publishEvent(GradeBatchProcessedEvent.of(studentId, grades.size()));
+        }
         return grades.stream().map(GradeResponse::of).toList();
     }
 

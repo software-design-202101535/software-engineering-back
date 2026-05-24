@@ -1,7 +1,10 @@
 package com.example.edumanager.domain.notification.service;
 
 import com.example.edumanager.domain.notification.entity.Notification;
+import com.example.edumanager.domain.notification.entity.NotificationType;
+import com.example.edumanager.domain.notification.entity.ReferenceType;
 import com.example.edumanager.domain.notification.repository.NotificationRepository;
+import com.example.edumanager.domain.user.entity.User;
 import com.example.edumanager.global.exception.CustomException;
 import com.example.edumanager.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -31,5 +34,15 @@ public class NotificationService {
     @Transactional
     public int markAllAsRead(Long userId) {
         return notificationRepository.markAllAsReadByUserId(userId);
+    }
+
+    @Transactional
+    public List<Notification> createAll(List<User> users, NotificationType type, String title, String message,
+                                        Long referenceId, ReferenceType referenceType) {
+        if (users.isEmpty()) return List.of();
+        List<Notification> notifications = users.stream()
+                .map(user -> Notification.of(user, type, title, message, referenceId, referenceType))
+                .toList();
+        return notificationRepository.saveAll(notifications);
     }
 }
