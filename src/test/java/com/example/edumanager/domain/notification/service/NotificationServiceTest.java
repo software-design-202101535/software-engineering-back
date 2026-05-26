@@ -116,7 +116,8 @@ class NotificationServiceTest {
         @DisplayName("TC-4-1. 수신자가 비어있음 → saveAll 미호출, 빈 리스트 반환")
         void emptyRecipients() {
             List<Notification> result = notificationService.createAll(
-                    List.of(), NotificationType.GRADE_UPDATED, "t", "m", 1L, ReferenceType.GRADE);
+                    List.of(), NotificationType.GRADE_UPDATED, "t", "m", 1L, ReferenceType.GRADE,
+                    1L, "홍길동");
 
             assertAll(
                     () -> assertTrue(result.isEmpty()),
@@ -137,7 +138,9 @@ class NotificationServiceTest {
                     "title",
                     "message",
                     7L,
-                    ReferenceType.FEEDBACK);
+                    ReferenceType.FEEDBACK,
+                    9L,
+                    "홍길동");
 
             @SuppressWarnings("unchecked")
             ArgumentCaptor<List<Notification>> captor = ArgumentCaptor.forClass(List.class);
@@ -151,7 +154,9 @@ class NotificationServiceTest {
                     () -> assertEquals("title", saved.get(0).getTitle()),
                     () -> assertEquals("message", saved.get(0).getMessage()),
                     () -> assertEquals(7L, saved.get(0).getReferenceId()),
-                    () -> assertEquals(ReferenceType.FEEDBACK, saved.get(0).getReferenceType())
+                    () -> assertEquals(ReferenceType.FEEDBACK, saved.get(0).getReferenceType()),
+                    () -> assertEquals(9L, saved.get(0).getReferenceStudentId()),
+                    () -> assertEquals("홍길동", saved.get(0).getReferenceStudentName())
             );
         }
     }

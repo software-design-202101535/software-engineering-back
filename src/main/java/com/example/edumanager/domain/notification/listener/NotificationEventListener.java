@@ -37,7 +37,8 @@ public class NotificationEventListener {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onGradeBatchProcessed(GradeBatchProcessedEvent event) {
-        List<User> recipients = collectStudentAndParents(event.getStudentId());
+        StudentProfile student = studentService.getById(event.getStudentId());
+        List<User> recipients = collectStudentAndParents(student);
         if (recipients.isEmpty()) return;
         notifyAll(
                 recipients,
@@ -45,7 +46,8 @@ public class NotificationEventListener {
                 "성적이 업데이트되었습니다",
                 String.format("성적 %d건이 등록/수정되었습니다.", event.getCount()),
                 event.getStudentId(),
-                ReferenceType.GRADE);
+                ReferenceType.GRADE,
+                student);
     }
 
     @Async(AsyncConfig.NOTIFICATION_EXECUTOR)
@@ -53,7 +55,8 @@ public class NotificationEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onFeedbackVisibilityChanged(FeedbackVisibilityChangedEvent event) {
         if (!event.hasRecipient()) return;
-        List<User> recipients = collectVisibleRecipients(event);
+        StudentProfile student = studentService.getById(event.getStudentId());
+        List<User> recipients = collectVisibleRecipients(event, student);
         if (recipients.isEmpty()) return;
         notifyAll(
                 recipients,
@@ -61,12 +64,14 @@ public class NotificationEventListener {
                 "새 피드백이 공유되었습니다",
                 String.format("%s 피드백이 공유되었습니다.", event.getCategoryName()),
                 event.getFeedbackId(),
-                ReferenceType.FEEDBACK);
+                ReferenceType.FEEDBACK,
+                student);
     }
 
     private void notifyAll(List<User> recipients, NotificationType type, String title, String body,
-                           Long referenceId, ReferenceType referenceType) {
-        notificationService.createAll(recipients, type, title, body, referenceId, referenceType);
+                           Long referenceId, ReferenceType referenceType, StudentProfile student) {
+        notificationService.createAll(recipients, type, title, body, referenceId, referenceType,
+                student.getId(), student.getUser().getName());
         schedulePushAfterCommit(recipients, title, body);
     }
 
@@ -90,21 +95,20 @@ public class NotificationEventListener {
         return deviceTokenService.findTokensByUserIds(userIds);
     }
 
-    private List<User> collectStudentAndParents(Long studentId) {
-        StudentProfile student = studentService.getById(studentId);
+    private List<User> collectStudentAndParents(StudentProfile student) {
         List<User> recipients = new ArrayList<>();
         recipients.add(student.getUser());
-        recipients.addAll(studentService.getParentsByStudentId(studentId));
+        recipients.addAll(studentService.getParentsByStudentId(student.getId()));
         return recipients;
     }
 
-    private List<User> collectVisibleRecipients(FeedbackVisibilityChangedEvent event) {
+    private List<User> collectVisibleRecipients(FeedbackVisibilityChangedEvent event, StudentProfile student) {
         List<User> recipients = new ArrayList<>();
         if (event.isNewlyVisibleToStudent()) {
-            recipients.add(studentService.getById(event.getStudentId()).getUser());
+            recipients.add(student.getUser());
         }
         if (event.isNewlyVisibleToParent()) {
-            recipients.addAll(studentService.getParentsByStudentId(event.getStudentId()));
+            recipients.addAll(studentService.getParentsByStudentId(student.getId()));
         }
         return recipients;
     }
