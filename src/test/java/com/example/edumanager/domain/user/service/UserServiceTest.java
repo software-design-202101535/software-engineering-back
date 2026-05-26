@@ -212,4 +212,44 @@ class UserServiceTest {
             verify(user).updateName("새이름");
         }
     }
+
+    @Nested
+    @DisplayName("7. registerOAuthUser()")
+    class RegisterOAuthUser {
+
+        @Test
+        @DisplayName("TC-7-1. 성공 → password=null + passwordEncoder 미호출")
+        void success() {
+            when(userRepository.existsByEmail("o@kakao.com")).thenReturn(false);
+            when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            User result = userService.registerOAuthUser("o@kakao.com", "OAuth유저", Role.STUDENT);
+
+            ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+            verify(userRepository).save(captor.capture());
+            User saved = captor.getValue();
+            assertAll(
+                    () -> assertEquals("o@kakao.com", saved.getEmail()),
+                    () -> assertEquals("OAuth유저", saved.getName()),
+                    () -> assertEquals(Role.STUDENT, saved.getRole()),
+                    () -> assertTrue(saved.isOAuthUser()),
+                    () -> assertEquals(saved, result)
+            );
+            verify(passwordEncoder, never()).encode(any());
+        }
+
+        @Test
+        @DisplayName("TC-7-2. 이메일 중복 → DUPLICATED_USER, save never")
+        void duplicatedEmail() {
+            when(userRepository.existsByEmail("o@kakao.com")).thenReturn(true);
+
+            CustomException ex = assertThrows(CustomException.class,
+                    () -> userService.registerOAuthUser("o@kakao.com", "OAuth유저", Role.STUDENT));
+
+            assertAll(
+                    () -> assertEquals(ErrorCode.DUPLICATED_USER, ex.getErrorCode()),
+                    () -> verify(userRepository, never()).save(any())
+            );
+        }
+    }
 }
