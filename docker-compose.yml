@@ -28,6 +28,7 @@ services:
     restart: unless-stopped
     expose:
       - "8080"
+      - "9090"
     environment:
       SPRING_PROFILES_ACTIVE: prod
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${DB_NAME}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
@@ -58,6 +59,76 @@ services:
       - caddy-logs:/var/log/caddy
     depends_on:
       - app
+      - grafana
+    networks:
+      - edumanager-network
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: edumanager-prometheus
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=15d
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    expose:
+      - "9090"
+    networks:
+      - edumanager-network
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: edumanager-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: https://grafana.edumanager.uk
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+    expose:
+      - "3000"
+    depends_on:
+      - prometheus
+    networks:
+      - edumanager-network
+
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    container_name: edumanager-node-exporter
+    restart: unless-stopped
+    command:
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --path.rootfs=/host
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host:ro,rslave
+    expose:
+      - "9100"
+    networks:
+      - edumanager-network
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: edumanager-cadvisor
+    restart: unless-stopped
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    expose:
+      - "8080"
     networks:
       - edumanager-network
 
@@ -69,6 +140,10 @@ volumes:
   caddy-config:
     driver: local
   caddy-logs:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
     driver: local
 
 networks:
