@@ -48,7 +48,7 @@ public class OAuthController implements OAuthApiSpecification {
                 .secure(true)
                 .path("/api/auth")
                 .maxAge(7 * 24 * 60 * 60)
-                .sameSite("Strict")
+                .sameSite("Lax")
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
