@@ -1,8 +1,10 @@
 package com.example.edumanager.global.security;
 
+import com.example.edumanager.domain.oauth.entity.OAuthProvider;
 import com.example.edumanager.domain.user.entity.Role;
 import com.example.edumanager.domain.user.entity.User;
 import com.example.edumanager.domain.user.repository.UserRepository;
+import com.example.edumanager.global.exception.CustomException;
 import com.example.edumanager.global.exception.ErrorCode;
 import com.example.edumanager.global.security.exception.JwtAuthException;
 import io.jsonwebtoken.*;
@@ -21,6 +23,9 @@ import java.util.UUID;
 
 @Component
 public class JwtTokenProvider {
+
+    private static final long TEMP_TOKEN_EXPIRY = 5 * 60 * 1000L;
+    private static final String TEMP_TOKEN_TYPE = "TEMP";
 
     private final UserRepository userRepository;
     private SecretKey key;
@@ -92,6 +97,35 @@ public class JwtTokenProvider {
 
     public long getRefreshTokenExpiry() {
         return this.refreshTokenExpiry;
+    }
+
+    public String createTempToken(String oauthId, OAuthProvider provider, String email, String name) {
+        long now = new Date().getTime();
+        return Jwts.builder()
+                .subject(oauthId)
+                .claim("type", TEMP_TOKEN_TYPE)
+                .claim("provider", provider.name())
+                .claim("email", email)
+                .claim("name", name)
+                .expiration(new Date(now + TEMP_TOKEN_EXPIRY))
+                .signWith(key)
+                .compact();
+    }
+
+    public Claims parseTempToken(String tempToken) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(tempToken)
+                    .getPayload();
+            if (!TEMP_TOKEN_TYPE.equals(claims.get("type", String.class))) {
+                throw new CustomException(ErrorCode.INVALID_TEMP_TOKEN);
+            }
+            return claims;
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new CustomException(ErrorCode.INVALID_TEMP_TOKEN);
+        }
     }
 
     public boolean validateToken(String token) {
