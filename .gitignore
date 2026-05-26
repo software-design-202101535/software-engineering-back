@@ -45,3 +45,4 @@ application.yml
 application-local.yml
 *.sql
 erd.html
+firebase-adminsdk*.json

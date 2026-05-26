@@ -7,6 +7,7 @@ import com.example.edumanager.domain.feedback.dto.UpdateFeedbackVisibilityReques
 import com.example.edumanager.domain.feedback.entity.Feedback;
 import com.example.edumanager.domain.feedback.entity.FeedbackCategory;
 import com.example.edumanager.domain.feedback.service.FeedbackService;
+import com.example.edumanager.domain.notification.event.FeedbackVisibilityChangedEvent;
 import com.example.edumanager.domain.student.entity.StudentProfile;
 import com.example.edumanager.domain.student.service.StudentService;
 import com.example.edumanager.domain.teacher.entity.TeacherProfile;
@@ -18,6 +19,7 @@ import com.example.edumanager.global.exception.CustomException;
 import com.example.edumanager.global.exception.ErrorCode;
 import com.example.edumanager.global.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +33,7 @@ public class FeedbackOperationFacade {
     private final StudentService studentService;
     private final TeacherService teacherService;
     private final UserService userService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public List<FeedbackResponse> getList(Long studentId, FeedbackCategory category, UserDetailsImpl userDetails) {
@@ -66,7 +69,22 @@ public class FeedbackOperationFacade {
         studentService.getById(studentId);
         Feedback feedback = feedbackService.getByIdAndStudentId(feedbackId, studentId);
         checkAuthor(feedback, userDetails);
-        return FeedbackResponse.of(feedbackService.updateVisibility(feedback, request));
+        boolean wasVisibleToStudent = feedback.isStudentVisible();
+        boolean wasVisibleToParent = feedback.isParentVisible();
+        Feedback updated = feedbackService.updateVisibility(feedback, request);
+        publishIfNewlyShared(updated, studentId, wasVisibleToStudent, wasVisibleToParent);
+        return FeedbackResponse.of(updated);
+    }
+
+    private void publishIfNewlyShared(Feedback updated, Long studentId,
+                                      boolean wasVisibleToStudent, boolean wasVisibleToParent) {
+        boolean newlyVisibleToStudent = !wasVisibleToStudent && updated.isStudentVisible();
+        boolean newlyVisibleToParent = !wasVisibleToParent && updated.isParentVisible();
+        if (!newlyVisibleToStudent && !newlyVisibleToParent) return;
+        eventPublisher.publishEvent(FeedbackVisibilityChangedEvent.of(
+                updated.getId(), studentId,
+                newlyVisibleToStudent, newlyVisibleToParent,
+                updated.getCategory().name()));
     }
 
     @Transactional

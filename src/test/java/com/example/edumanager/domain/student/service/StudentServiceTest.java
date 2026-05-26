@@ -152,12 +152,9 @@ class StudentServiceTest {
     class GetParentsByStudentId {
 
         @Test
-        @DisplayName("TC-5-1. 성공 → getById → findAllByStudent → parent 목록 반환")
+        @DisplayName("TC-5-1. 성공 → findAllParentUsersByStudentId 위임, 결과 그대로 반환")
         void success() {
-            ParentStudent parentStudent = mock(ParentStudent.class);
-            when(studentProfileRepository.findById(1L)).thenReturn(Optional.of(student));
-            when(parentStudentRepository.findAllByStudent(student)).thenReturn(List.of(parentStudent));
-            when(parentStudent.getParent()).thenReturn(user);
+            when(parentStudentRepository.findAllParentUsersByStudentId(1L)).thenReturn(List.of(user));
 
             List<User> result = studentService.getParentsByStudentId(1L);
 

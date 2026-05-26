@@ -39,10 +39,7 @@ public class StudentService {
     }
 
     public List<User> getParentsByStudentId(Long studentId) {
-        StudentProfile student = getById(studentId);
-        return parentStudentRepository.findAllByStudent(student).stream()
-                .map(ParentStudent::getParent)
-                .toList();
+        return parentStudentRepository.findAllParentUsersByStudentId(studentId);
     }
 
     public List<StudentProfile> getProfilesByParent(User parent) {
