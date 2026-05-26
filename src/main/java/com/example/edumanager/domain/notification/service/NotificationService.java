@@ -33,10 +33,12 @@ public class NotificationService {
     }
 
     public List<Notification> createAll(List<User> users, NotificationType type, String title, String message,
-                                        Long referenceId, ReferenceType referenceType) {
+                                        Long referenceId, ReferenceType referenceType,
+                                        Long referenceStudentId, String referenceStudentName) {
         if (users.isEmpty()) return List.of();
         List<Notification> notifications = users.stream()
-                .map(user -> Notification.of(user, type, title, message, referenceId, referenceType))
+                .map(user -> Notification.of(user, type, title, message, referenceId, referenceType,
+                        referenceStudentId, referenceStudentName))
                 .toList();
         return notificationRepository.saveAll(notifications);
     }

@@ -44,12 +44,19 @@ public class Notification {
     @Column(length = 20)
     private ReferenceType referenceType;
 
+    @Column(nullable = false)
+    private Long referenceStudentId;
+
+    @Column(length = 50)
+    private String referenceStudentName;
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     public static Notification of(User user, NotificationType type, String title, String message,
-                                  Long referenceId, ReferenceType referenceType) {
+                                  Long referenceId, ReferenceType referenceType,
+                                  Long referenceStudentId, String referenceStudentName) {
         Notification notification = new Notification();
         notification.user = user;
         notification.type = type;
@@ -58,6 +65,8 @@ public class Notification {
         notification.isRead = false;
         notification.referenceId = referenceId;
         notification.referenceType = referenceType;
+        notification.referenceStudentId = referenceStudentId;
+        notification.referenceStudentName = referenceStudentName;
         return notification;
     }
 

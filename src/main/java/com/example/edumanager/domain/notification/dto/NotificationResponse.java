@@ -15,6 +15,8 @@ public class NotificationResponse {
     private boolean isRead;
     private Long referenceId;
     private String referenceType;
+    private Long referenceStudentId;
+    private String referenceStudentName;
     private LocalDateTime createdAt;
 
     private NotificationResponse() {
@@ -39,6 +41,8 @@ public class NotificationResponse {
         response.referenceType = notification.getReferenceType() == null
                 ? null
                 : notification.getReferenceType().name();
+        response.referenceStudentId = notification.getReferenceStudentId();
+        response.referenceStudentName = notification.getReferenceStudentName();
         response.createdAt = notification.getCreatedAt();
         return response;
     }

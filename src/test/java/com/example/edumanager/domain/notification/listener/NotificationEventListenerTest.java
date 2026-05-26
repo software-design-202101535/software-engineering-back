@@ -52,7 +52,9 @@ class NotificationEventListenerTest {
         @DisplayName("TC-1-1. 학생+학부모들 → DB 알림 저장 + FCM push 발송")
         void withParents() {
             when(studentService.getById(10L)).thenReturn(student);
+            when(student.getId()).thenReturn(10L);
             when(student.getUser()).thenReturn(studentUser);
+            when(studentUser.getName()).thenReturn("홍길동");
             when(studentService.getParentsByStudentId(10L)).thenReturn(List.of(parentUser1, parentUser2));
             when(studentUser.getId()).thenReturn(100L);
             when(parentUser1.getId()).thenReturn(200L);
@@ -68,7 +70,9 @@ class NotificationEventListenerTest {
                     "성적이 업데이트되었습니다",
                     "성적 3건이 등록/수정되었습니다.",
                     10L,
-                    ReferenceType.GRADE);
+                    ReferenceType.GRADE,
+                    10L,
+                    "홍길동");
             verify(fcmClient).send(
                     List.of("tok-s", "tok-p1", "tok-p2"),
                     "성적이 업데이트되었습니다",
@@ -79,7 +83,9 @@ class NotificationEventListenerTest {
         @DisplayName("TC-1-2. 학부모 없음 → 학생에게만 알림+push")
         void withoutParents() {
             when(studentService.getById(10L)).thenReturn(student);
+            when(student.getId()).thenReturn(10L);
             when(student.getUser()).thenReturn(studentUser);
+            when(studentUser.getName()).thenReturn("홍길동");
             when(studentService.getParentsByStudentId(10L)).thenReturn(List.of());
             when(studentUser.getId()).thenReturn(100L);
             when(deviceTokenService.findTokensByUserIds(List.of(100L))).thenReturn(List.of("tok-s"));
@@ -92,7 +98,9 @@ class NotificationEventListenerTest {
                     "성적이 업데이트되었습니다",
                     "성적 1건이 등록/수정되었습니다.",
                     10L,
-                    ReferenceType.GRADE);
+                    ReferenceType.GRADE,
+                    10L,
+                    "홍길동");
             verify(fcmClient).send(
                     List.of("tok-s"),
                     "성적이 업데이트되었습니다",
@@ -110,7 +118,7 @@ class NotificationEventListenerTest {
             listener.onFeedbackVisibilityChanged(FeedbackVisibilityChangedEvent.of(
                     5L, 10L, false, false, "ATTITUDE"));
 
-            verify(notificationService, never()).createAll(any(), any(), any(), any(), anyLong(), any());
+            verify(notificationService, never()).createAll(any(), any(), any(), any(), anyLong(), any(), anyLong(), any());
             verify(fcmClient, never()).send(any(), anyString(), anyString());
             verify(studentService, never()).getById(anyLong());
         }
@@ -119,7 +127,9 @@ class NotificationEventListenerTest {
         @DisplayName("TC-2-2. 학생만 신규 공개 → 학생만 알림+push")
         void studentOnly() {
             when(studentService.getById(10L)).thenReturn(student);
+            when(student.getId()).thenReturn(10L);
             when(student.getUser()).thenReturn(studentUser);
+            when(studentUser.getName()).thenReturn("홍길동");
             when(studentUser.getId()).thenReturn(100L);
             when(deviceTokenService.findTokensByUserIds(List.of(100L))).thenReturn(List.of("tok-s"));
 
@@ -132,7 +142,9 @@ class NotificationEventListenerTest {
                     "새 피드백이 공유되었습니다",
                     "ATTITUDE 피드백이 공유되었습니다.",
                     5L,
-                    ReferenceType.FEEDBACK);
+                    ReferenceType.FEEDBACK,
+                    10L,
+                    "홍길동");
             verify(fcmClient).send(
                     List.of("tok-s"),
                     "새 피드백이 공유되었습니다",
@@ -144,7 +156,9 @@ class NotificationEventListenerTest {
         @DisplayName("TC-2-3. 학생+학부모 모두 신규 공개 → 둘 다 알림+push")
         void bothStudentAndParents() {
             when(studentService.getById(10L)).thenReturn(student);
+            when(student.getId()).thenReturn(10L);
             when(student.getUser()).thenReturn(studentUser);
+            when(studentUser.getName()).thenReturn("홍길동");
             when(studentService.getParentsByStudentId(10L)).thenReturn(List.of(parentUser1));
             when(studentUser.getId()).thenReturn(100L);
             when(parentUser1.getId()).thenReturn(200L);
@@ -160,7 +174,9 @@ class NotificationEventListenerTest {
                     "새 피드백이 공유되었습니다",
                     "GRADE 피드백이 공유되었습니다.",
                     5L,
-                    ReferenceType.FEEDBACK);
+                    ReferenceType.FEEDBACK,
+                    10L,
+                    "홍길동");
             verify(fcmClient).send(
                     List.of("tok-s", "tok-p1"),
                     "새 피드백이 공유되었습니다",
@@ -170,19 +186,24 @@ class NotificationEventListenerTest {
         @Test
         @DisplayName("TC-2-5. 학부모만 신규 공개이지만 학부모 0명 → createAll/fcm 모두 미호출")
         void parentOnlyButNoParents() {
+            when(studentService.getById(10L)).thenReturn(student);
+            when(student.getId()).thenReturn(10L);
             when(studentService.getParentsByStudentId(10L)).thenReturn(List.of());
 
             listener.onFeedbackVisibilityChanged(FeedbackVisibilityChangedEvent.of(
                     5L, 10L, false, true, "ATTITUDE"));
 
-            verify(notificationService, never()).createAll(any(), any(), any(), any(), anyLong(), any());
+            verify(notificationService, never()).createAll(any(), any(), any(), any(), anyLong(), any(), anyLong(), any());
             verify(fcmClient, never()).send(any(), anyString(), anyString());
-            verify(studentService, never()).getById(anyLong());
         }
 
         @Test
-        @DisplayName("TC-2-4. 학부모만 신규 공개 → 학부모들만 알림+push (학생 조회 안 함)")
+        @DisplayName("TC-2-4. 학부모만 신규 공개 → 학부모들만 알림+push")
         void parentOnly() {
+            when(studentService.getById(10L)).thenReturn(student);
+            when(student.getId()).thenReturn(10L);
+            when(student.getUser()).thenReturn(studentUser);
+            when(studentUser.getName()).thenReturn("홍길동");
             when(studentService.getParentsByStudentId(10L)).thenReturn(List.of(parentUser1, parentUser2));
             when(parentUser1.getId()).thenReturn(200L);
             when(parentUser2.getId()).thenReturn(201L);
@@ -198,12 +219,13 @@ class NotificationEventListenerTest {
                     "새 피드백이 공유되었습니다",
                     "BEHAVIOR 피드백이 공유되었습니다.",
                     5L,
-                    ReferenceType.FEEDBACK);
+                    ReferenceType.FEEDBACK,
+                    10L,
+                    "홍길동");
             verify(fcmClient).send(
                     List.of("tok-p1", "tok-p2"),
                     "새 피드백이 공유되었습니다",
                     "BEHAVIOR 피드백이 공유되었습니다.");
-            verify(studentService, never()).getById(anyLong());
         }
     }
 }

@@ -89,7 +89,7 @@ class NotificationRepositoryTest extends AbstractRepositoryIntegrationTest {
 
     private Notification persistNotification(User user, boolean read) {
         Notification notification = Notification.of(
-                user, NotificationType.GRADE_UPDATED, "t", "m", 1L, ReferenceType.GRADE);
+                user, NotificationType.GRADE_UPDATED, "t", "m", 1L, ReferenceType.GRADE, 1L, "홍길동");
         if (read) notification.markAsRead();
         em.persist(notification);
         return notification;
