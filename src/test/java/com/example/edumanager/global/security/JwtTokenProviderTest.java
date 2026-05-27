@@ -45,21 +45,17 @@ class JwtTokenProviderTest {
     }
 
     @Test
-    @DisplayName("createTempToken → parseTempToken: oauthId/provider/email/name/type 클레임이 그대로 복원된다")
+    @DisplayName("createTempToken → parseTempToken: oauthId/provider/type 클레임이 그대로 복원된다")
     void tempTokenRoundTripPreservesAllClaims() {
         String oauthId = "kakao-12345";
-        String email = "user@example.com";
-        String name = "홍길동";
 
-        String tempToken = jwtTokenProvider.createTempToken(oauthId, OAuthProvider.KAKAO, email, name);
+        String tempToken = jwtTokenProvider.createTempToken(oauthId, OAuthProvider.KAKAO);
         Claims claims = jwtTokenProvider.parseTempToken(tempToken);
 
         assertAll(
                 () -> assertThat(claims.getSubject()).isEqualTo(oauthId),
                 () -> assertThat(claims.get("type", String.class)).isEqualTo("TEMP"),
-                () -> assertThat(claims.get("provider", String.class)).isEqualTo("KAKAO"),
-                () -> assertThat(claims.get("email", String.class)).isEqualTo(email),
-                () -> assertThat(claims.get("name", String.class)).isEqualTo(name)
+                () -> assertThat(claims.get("provider", String.class)).isEqualTo("KAKAO")
         );
     }
 

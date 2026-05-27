@@ -42,7 +42,7 @@ class KakaoOAuthClientTest {
     private MockRestServiceServer server;
 
     @Test
-    @DisplayName("정상 응답: oauthId/email/name 을 OAuthUserInfo 로 매핑한다")
+    @DisplayName("정상 응답: oauthId 를 OAuthUserInfo 로 매핑한다")
     void fetchUserInfoMapsResponse() {
         server.expect(requestTo(TOKEN_URI))
                 .andExpect(method(HttpMethod.POST))
@@ -55,11 +55,7 @@ class KakaoOAuthClientTest {
 
         OAuthUserInfo info = kakaoOAuthClient.fetchUserInfo("code");
 
-        assertAll(
-                () -> assertThat(info.getOauthId()).isEqualTo("1234567890"),
-                () -> assertThat(info.getEmail()).isEqualTo("u@example.com"),
-                () -> assertThat(info.getName()).isEqualTo("홍길동")
-        );
+        assertThat(info.getOauthId()).isEqualTo("1234567890");
     }
 
     @Test
@@ -97,8 +93,8 @@ class KakaoOAuthClientTest {
     }
 
     @Test
-    @DisplayName("kakao_account 미동의(null) 시 email/name 은 null 이지만 oauthId 는 반환된다")
-    void userInfoWithoutKakaoAccountReturnsNullEmailAndName() {
+    @DisplayName("kakao_account 가 없어도 oauthId 만 있으면 반환된다")
+    void userInfoWithoutKakaoAccountReturnsOauthId() {
         server.expect(requestTo(TOKEN_URI))
                 .andRespond(withSuccess("{\"access_token\":\"kakao-access\"}", MediaType.APPLICATION_JSON));
         server.expect(requestTo(USER_INFO_URI))
@@ -106,10 +102,6 @@ class KakaoOAuthClientTest {
 
         OAuthUserInfo info = kakaoOAuthClient.fetchUserInfo("code");
 
-        assertAll(
-                () -> assertThat(info.getOauthId()).isEqualTo("42"),
-                () -> assertThat(info.getEmail()).isNull(),
-                () -> assertThat(info.getName()).isNull()
-        );
+        assertThat(info.getOauthId()).isEqualTo("42");
     }
 }

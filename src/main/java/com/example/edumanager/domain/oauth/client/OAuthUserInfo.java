@@ -6,16 +6,12 @@ import lombok.Getter;
 public class OAuthUserInfo {
 
     private final String oauthId;
-    private final String email;
-    private final String name;
 
-    private OAuthUserInfo(String oauthId, String email, String name) {
+    private OAuthUserInfo(String oauthId) {
         this.oauthId = oauthId;
-        this.email = email;
-        this.name = name;
     }
 
-    public static OAuthUserInfo of(String oauthId, String email, String name) {
-        return new OAuthUserInfo(oauthId, email, name);
+    public static OAuthUserInfo of(String oauthId) {
+        return new OAuthUserInfo(oauthId);
     }
 }

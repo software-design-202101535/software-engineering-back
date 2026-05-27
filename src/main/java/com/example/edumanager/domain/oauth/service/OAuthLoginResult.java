@@ -7,14 +7,10 @@ public class OAuthLoginResult {
 
     private final Long existingUserId;
     private final String tempToken;
-    private final String email;
-    private final String name;
 
-    private OAuthLoginResult(Long existingUserId, String tempToken, String email, String name) {
+    private OAuthLoginResult(Long existingUserId, String tempToken) {
         this.existingUserId = existingUserId;
         this.tempToken = tempToken;
-        this.email = email;
-        this.name = name;
     }
 
     public boolean isNewUser() {
@@ -22,10 +18,10 @@ public class OAuthLoginResult {
     }
 
     public static OAuthLoginResult existing(Long userId) {
-        return new OAuthLoginResult(userId, null, null, null);
+        return new OAuthLoginResult(userId, null);
     }
 
-    public static OAuthLoginResult newUser(String tempToken, String email, String name) {
-        return new OAuthLoginResult(null, tempToken, email, name);
+    public static OAuthLoginResult newUser(String tempToken) {
+        return new OAuthLoginResult(null, tempToken);
     }
 }

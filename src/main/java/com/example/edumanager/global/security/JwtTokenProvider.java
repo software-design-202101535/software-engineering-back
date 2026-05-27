@@ -99,14 +99,12 @@ public class JwtTokenProvider {
         return this.refreshTokenExpiry;
     }
 
-    public String createTempToken(String oauthId, OAuthProvider provider, String email, String name) {
+    public String createTempToken(String oauthId, OAuthProvider provider) {
         long now = new Date().getTime();
         return Jwts.builder()
                 .subject(oauthId)
                 .claim("type", TEMP_TOKEN_TYPE)
                 .claim("provider", provider.name())
-                .claim("email", email)
-                .claim("name", name)
                 .expiration(new Date(now + TEMP_TOKEN_EXPIRY))
                 .signWith(key)
                 .compact();

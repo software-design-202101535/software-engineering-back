@@ -76,13 +76,7 @@ public class KakaoOAuthClient {
             throw new CustomException(ErrorCode.OAUTH_PROVIDER_ERROR);
         }
 
-        String oauthId = String.valueOf(response.id());
-        String email = response.kakaoAccount() != null ? response.kakaoAccount().email() : null;
-        String name = response.kakaoAccount() != null && response.kakaoAccount().profile() != null
-                ? response.kakaoAccount().profile().nickname()
-                : null;
-
-        return OAuthUserInfo.of(oauthId, email, name);
+        return OAuthUserInfo.of(String.valueOf(response.id()));
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -93,17 +87,7 @@ public class KakaoOAuthClient {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     private record KakaoUserResponse(
-            Long id,
-            @JsonProperty("kakao_account") KakaoAccount kakaoAccount
+            Long id
     ) {
-        @JsonIgnoreProperties(ignoreUnknown = true)
-        private record KakaoAccount(
-                String email,
-                Profile profile
-        ) {
-            @JsonIgnoreProperties(ignoreUnknown = true)
-            private record Profile(String nickname) {
-            }
-        }
     }
 }

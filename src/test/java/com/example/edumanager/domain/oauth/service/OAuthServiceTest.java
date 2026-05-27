@@ -47,7 +47,7 @@ class OAuthServiceTest {
         @Test
         @DisplayName("TC-1-1. 기존 유저 → existing(userId) 반환, tempToken 발급 안 함")
         void existingUser() {
-            OAuthUserInfo info = OAuthUserInfo.of("kakao-1", "e@k.com", "name");
+            OAuthUserInfo info = OAuthUserInfo.of("kakao-1");
             when(kakaoOAuthClient.fetchUserInfo("code-1")).thenReturn(info);
             when(oauthAccountRepository.findUserIdByProviderAndOauthId(OAuthProvider.KAKAO, "kakao-1"))
                     .thenReturn(Optional.of(7L));
@@ -57,27 +57,25 @@ class OAuthServiceTest {
             assertAll(
                     () -> assertFalse(result.isNewUser()),
                     () -> assertEquals(7L, result.getExistingUserId()),
-                    () -> verify(jwtTokenProvider, never()).createTempToken(any(), any(), any(), any())
+                    () -> verify(jwtTokenProvider, never()).createTempToken(any(), any())
             );
         }
 
         @Test
-        @DisplayName("TC-1-2. 신규 유저 → newUser(tempToken, email, name) 반환")
+        @DisplayName("TC-1-2. 신규 유저 → newUser(tempToken) 반환")
         void newUser() {
-            OAuthUserInfo info = OAuthUserInfo.of("kakao-2", "new@k.com", "신규");
+            OAuthUserInfo info = OAuthUserInfo.of("kakao-2");
             when(kakaoOAuthClient.fetchUserInfo("code-2")).thenReturn(info);
             when(oauthAccountRepository.findUserIdByProviderAndOauthId(OAuthProvider.KAKAO, "kakao-2"))
                     .thenReturn(Optional.empty());
-            when(jwtTokenProvider.createTempToken("kakao-2", OAuthProvider.KAKAO, "new@k.com", "신규"))
+            when(jwtTokenProvider.createTempToken("kakao-2", OAuthProvider.KAKAO))
                     .thenReturn("temp-jwt");
 
             OAuthLoginResult result = oauthService.loginWithKakao("code-2");
 
             assertAll(
                     () -> assertTrue(result.isNewUser()),
-                    () -> assertEquals("temp-jwt", result.getTempToken()),
-                    () -> assertEquals("new@k.com", result.getEmail()),
-                    () -> assertEquals("신규", result.getName())
+                    () -> assertEquals("temp-jwt", result.getTempToken())
             );
         }
     }
@@ -92,16 +90,12 @@ class OAuthServiceTest {
             when(jwtTokenProvider.parseTempToken("temp-jwt")).thenReturn(claims);
             when(claims.getSubject()).thenReturn("kakao-1");
             when(claims.get("provider", String.class)).thenReturn("KAKAO");
-            when(claims.get("email", String.class)).thenReturn("e@k.com");
-            when(claims.get("name", String.class)).thenReturn("홍길동");
 
             OAuthTempTokenPayload payload = oauthService.parseTempToken("temp-jwt");
 
             assertAll(
                     () -> assertEquals("kakao-1", payload.getOauthId()),
-                    () -> assertEquals(OAuthProvider.KAKAO, payload.getProvider()),
-                    () -> assertEquals("e@k.com", payload.getEmail()),
-                    () -> assertEquals("홍길동", payload.getName())
+                    () -> assertEquals(OAuthProvider.KAKAO, payload.getProvider())
             );
         }
     }

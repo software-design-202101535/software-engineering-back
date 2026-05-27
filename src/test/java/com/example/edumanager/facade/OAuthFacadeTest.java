@@ -98,19 +98,17 @@ class OAuthFacadeTest {
         }
 
         @Test
-        @DisplayName("TC-1-2. 신규 유저 → newUser(tempToken, email, name) 반환, 후속 호출 never")
+        @DisplayName("TC-1-2. 신규 유저 → newUser(tempToken) 반환, 후속 호출 never")
         void newUser() {
             OAuthLoginRequest request = OAuthLoginRequest.of("code-2");
             when(oauthService.loginWithKakao("code-2"))
-                    .thenReturn(OAuthLoginResult.newUser("temp-jwt", "new@k.com", "신규"));
+                    .thenReturn(OAuthLoginResult.newUser("temp-jwt"));
 
             OAuthLoginResponse response = facade.loginWithKakao(request);
 
             assertAll(
                     () -> assertTrue(response.isNewUser()),
                     () -> assertEquals("temp-jwt", response.getTempToken()),
-                    () -> assertEquals("new@k.com", response.getEmail()),
-                    () -> assertEquals("신규", response.getName()),
                     () -> verify(userService, never()).getById(any()),
                     () -> verify(authService, never()).issueTokens(any())
             );
@@ -125,11 +123,10 @@ class OAuthFacadeTest {
         @DisplayName("TC-2-1. TEACHER 정상 → InOrder: parseTempToken → registerOAuthUser → link → createProfile → issueTokens")
         void teacherSuccess() {
             OAuthRegisterRequest request = OAuthRegisterRequest.of(
-                    "temp-jwt", Role.TEACHER, null,
+                    "temp-jwt", Role.TEACHER, "t@k.com", "교사",
                     OAuthRegisterRequest.TeacherInfo.of("SUNRIN_HIGH_SCHOOL", 2, 3),
                     null, null);
-            OAuthTempTokenPayload payload = OAuthTempTokenPayload.of(
-                    "kakao-1", OAuthProvider.KAKAO, "t@k.com", "교사");
+            OAuthTempTokenPayload payload = OAuthTempTokenPayload.of("kakao-1", OAuthProvider.KAKAO);
 
             when(oauthService.parseTempToken("temp-jwt")).thenReturn(payload);
             when(userService.registerOAuthUser("t@k.com", "교사", Role.TEACHER)).thenReturn(user);
@@ -151,11 +148,10 @@ class OAuthFacadeTest {
         @DisplayName("TC-2-2. STUDENT 정상 → studentService.createProfile 호출")
         void studentSuccess() {
             OAuthRegisterRequest request = OAuthRegisterRequest.of(
-                    "temp-jwt", Role.STUDENT, null, null,
+                    "temp-jwt", Role.STUDENT, "s@k.com", "학생", null,
                     OAuthRegisterRequest.StudentInfo.of("SUNRIN_HIGH_SCHOOL", 1, 2, 15),
                     null);
-            OAuthTempTokenPayload payload = OAuthTempTokenPayload.of(
-                    "kakao-1", OAuthProvider.KAKAO, "s@k.com", "학생");
+            OAuthTempTokenPayload payload = OAuthTempTokenPayload.of("kakao-1", OAuthProvider.KAKAO);
 
             when(oauthService.parseTempToken("temp-jwt")).thenReturn(payload);
             when(userService.registerOAuthUser("s@k.com", "학생", Role.STUDENT)).thenReturn(user);
@@ -173,10 +169,9 @@ class OAuthFacadeTest {
         @DisplayName("TC-2-3. PARENT 정상 → getStudentByEmail + linkParent 호출")
         void parentSuccess() {
             OAuthRegisterRequest request = OAuthRegisterRequest.of(
-                    "temp-jwt", Role.PARENT, null, null, null,
+                    "temp-jwt", Role.PARENT, "p@k.com", "학부모", null, null,
                     OAuthRegisterRequest.ParentInfo.of("child@k.com"));
-            OAuthTempTokenPayload payload = OAuthTempTokenPayload.of(
-                    "kakao-1", OAuthProvider.KAKAO, "p@k.com", "학부모");
+            OAuthTempTokenPayload payload = OAuthTempTokenPayload.of("kakao-1", OAuthProvider.KAKAO);
 
             when(oauthService.parseTempToken("temp-jwt")).thenReturn(payload);
             when(userService.registerOAuthUser("p@k.com", "학부모", Role.PARENT)).thenReturn(user);
@@ -197,9 +192,8 @@ class OAuthFacadeTest {
         @DisplayName("TC-2-4. role-info 누락 → OAUTH_ROLE_INFO_REQUIRED")
         void roleInfoMissing(Role role) {
             OAuthRegisterRequest request = OAuthRegisterRequest.of(
-                    "temp-jwt", role, null, null, null, null);
-            OAuthTempTokenPayload payload = OAuthTempTokenPayload.of(
-                    "kakao-1", OAuthProvider.KAKAO, "e@k.com", "n");
+                    "temp-jwt", role, "e@k.com", "n", null, null, null);
+            OAuthTempTokenPayload payload = OAuthTempTokenPayload.of("kakao-1", OAuthProvider.KAKAO);
             when(oauthService.parseTempToken("temp-jwt")).thenReturn(payload);
             when(userService.registerOAuthUser(any(), any(), any())).thenReturn(user);
 
@@ -210,72 +204,12 @@ class OAuthFacadeTest {
         }
 
         @Test
-        @DisplayName("TC-2-5. payload.email 없음 + request.email 없음 → OAUTH_EMAIL_REQUIRED")
-        void emailMissing() {
-            OAuthRegisterRequest request = OAuthRegisterRequest.of(
-                    "temp-jwt", Role.TEACHER, null,
-                    OAuthRegisterRequest.TeacherInfo.of("SUNRIN_HIGH_SCHOOL", 1, 1), null, null);
-            OAuthTempTokenPayload payload = OAuthTempTokenPayload.of(
-                    "kakao-1", OAuthProvider.KAKAO, null, "n");
-            when(oauthService.parseTempToken("temp-jwt")).thenReturn(payload);
-
-            CustomException ex = assertThrows(CustomException.class,
-                    () -> facade.registerWithKakao(request));
-
-            assertAll(
-                    () -> assertEquals(ErrorCode.OAUTH_EMAIL_REQUIRED, ex.getErrorCode()),
-                    () -> verify(userService, never()).registerOAuthUser(any(), any(), any())
-            );
-        }
-
-        @Test
-        @DisplayName("TC-2-6. payload.email 있음 → payload 값 사용")
-        void emailFromPayload() {
-            OAuthRegisterRequest request = OAuthRegisterRequest.of(
-                    "temp-jwt", Role.TEACHER, "req@k.com",
-                    OAuthRegisterRequest.TeacherInfo.of("SUNRIN_HIGH_SCHOOL", 1, 1), null, null);
-            OAuthTempTokenPayload payload = OAuthTempTokenPayload.of(
-                    "kakao-1", OAuthProvider.KAKAO, "payload@k.com", "n");
-
-            when(oauthService.parseTempToken("temp-jwt")).thenReturn(payload);
-            when(userService.registerOAuthUser("payload@k.com", "n", Role.TEACHER)).thenReturn(user);
-            when(user.getRole()).thenReturn(Role.TEACHER);
-            when(authService.issueTokens(user)).thenReturn(tokens);
-            when(teacherService.getProfileByUserId(any())).thenReturn(teacherProfile);
-
-            facade.registerWithKakao(request);
-
-            verify(userService).registerOAuthUser("payload@k.com", "n", Role.TEACHER);
-        }
-
-        @Test
-        @DisplayName("TC-2-7. payload.email 빈문자열 + request.email 있음 → request 값 사용")
-        void emailFromRequestWhenPayloadBlank() {
-            OAuthRegisterRequest request = OAuthRegisterRequest.of(
-                    "temp-jwt", Role.TEACHER, "req@k.com",
-                    OAuthRegisterRequest.TeacherInfo.of("SUNRIN_HIGH_SCHOOL", 1, 1), null, null);
-            OAuthTempTokenPayload payload = OAuthTempTokenPayload.of(
-                    "kakao-1", OAuthProvider.KAKAO, "", "n");
-
-            when(oauthService.parseTempToken("temp-jwt")).thenReturn(payload);
-            when(userService.registerOAuthUser("req@k.com", "n", Role.TEACHER)).thenReturn(user);
-            when(user.getRole()).thenReturn(Role.TEACHER);
-            when(authService.issueTokens(user)).thenReturn(tokens);
-            when(teacherService.getProfileByUserId(any())).thenReturn(teacherProfile);
-
-            facade.registerWithKakao(request);
-
-            verify(userService).registerOAuthUser("req@k.com", "n", Role.TEACHER);
-        }
-
-        @Test
-        @DisplayName("TC-2-8. registerOAuthUser 중복 throw → link/createProfile/issueTokens never (partial-failure 가드)")
+        @DisplayName("TC-2-5. registerOAuthUser 중복 throw → link/createProfile/issueTokens never (partial-failure 가드)")
         void registerDuplicatedRollback() {
             OAuthRegisterRequest request = OAuthRegisterRequest.of(
-                    "temp-jwt", Role.TEACHER, null,
+                    "temp-jwt", Role.TEACHER, "dup@k.com", "n",
                     OAuthRegisterRequest.TeacherInfo.of("SUNRIN_HIGH_SCHOOL", 1, 1), null, null);
-            OAuthTempTokenPayload payload = OAuthTempTokenPayload.of(
-                    "kakao-1", OAuthProvider.KAKAO, "dup@k.com", "n");
+            OAuthTempTokenPayload payload = OAuthTempTokenPayload.of("kakao-1", OAuthProvider.KAKAO);
 
             when(oauthService.parseTempToken("temp-jwt")).thenReturn(payload);
             when(userService.registerOAuthUser("dup@k.com", "n", Role.TEACHER))

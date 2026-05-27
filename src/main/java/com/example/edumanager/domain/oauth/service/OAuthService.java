@@ -26,20 +26,15 @@ public class OAuthService {
         return oauthAccountRepository
                 .findUserIdByProviderAndOauthId(provider, info.getOauthId())
                 .map(OAuthLoginResult::existing)
-                .orElseGet(() -> {
-                    String tempToken = jwtTokenProvider.createTempToken(
-                            info.getOauthId(), provider, info.getEmail(), info.getName());
-                    return OAuthLoginResult.newUser(tempToken, info.getEmail(), info.getName());
-                });
+                .orElseGet(() -> OAuthLoginResult.newUser(
+                        jwtTokenProvider.createTempToken(info.getOauthId(), provider)));
     }
 
     public OAuthTempTokenPayload parseTempToken(String tempToken) {
         Claims claims = jwtTokenProvider.parseTempToken(tempToken);
         return OAuthTempTokenPayload.of(
                 claims.getSubject(),
-                OAuthProvider.valueOf(claims.get("provider", String.class)),
-                claims.get("email", String.class),
-                claims.get("name", String.class)
+                OAuthProvider.valueOf(claims.get("provider", String.class))
         );
     }
 

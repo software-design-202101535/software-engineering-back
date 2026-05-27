@@ -63,7 +63,7 @@ class OAuthControllerTest {
         void newUser() throws Exception {
             OAuthLoginRequest request = OAuthLoginRequest.of("code-2");
             when(oauthFacade.loginWithKakao(any()))
-                    .thenReturn(OAuthLoginResponse.newUser("temp-jwt", "new@k.com", "신규"));
+                    .thenReturn(OAuthLoginResponse.newUser("temp-jwt"));
 
             mockMvc.perform(post("/api/auth/oauth/kakao")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -71,8 +71,6 @@ class OAuthControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.isNewUser").value(true))
                     .andExpect(jsonPath("$.tempToken").value("temp-jwt"))
-                    .andExpect(jsonPath("$.email").value("new@k.com"))
-                    .andExpect(jsonPath("$.name").value("신규"))
                     .andExpect(header().string(HttpHeaders.SET_COOKIE, nullValue()));
         }
     }
@@ -85,7 +83,7 @@ class OAuthControllerTest {
         @DisplayName("TC-2-1. 유효한 요청 → 200 + refreshToken 쿠키")
         void success() throws Exception {
             OAuthRegisterRequest request = OAuthRegisterRequest.of(
-                    "temp-jwt", Role.TEACHER, null,
+                    "temp-jwt", Role.TEACHER, "t@k.com", "교사",
                     OAuthRegisterRequest.TeacherInfo.of("SUNRIN_HIGH_SCHOOL", 1, 1),
                     null, null);
             when(oauthFacade.registerWithKakao(any()))

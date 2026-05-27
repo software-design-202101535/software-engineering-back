@@ -23,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+
 @Component
 @RequiredArgsConstructor
 public class OAuthFacade {
@@ -38,7 +39,7 @@ public class OAuthFacade {
         OAuthLoginResult result = oauthService.loginWithKakao(request.getCode());
 
         if (result.isNewUser()) {
-            return OAuthLoginResponse.newUser(result.getTempToken(), result.getEmail(), result.getName());
+            return OAuthLoginResponse.newUser(result.getTempToken());
         }
 
         User user = userService.getById(result.getExistingUserId());
@@ -50,8 +51,7 @@ public class OAuthFacade {
     public LoginResponse registerWithKakao(OAuthRegisterRequest request) {
         OAuthTempTokenPayload payload = oauthService.parseTempToken(request.getTempToken());
 
-        String email = resolveEmail(payload, request);
-        User user = userService.registerOAuthUser(email, payload.getName(), request.getRole());
+        User user = userService.registerOAuthUser(request.getEmail(), request.getName(), request.getRole());
         oauthService.link(user, payload.getProvider(), payload.getOauthId());
 
         switch (request.getRole()) {
@@ -62,16 +62,6 @@ public class OAuthFacade {
 
         AuthTokens tokens = authService.issueTokens(user);
         return buildLoginResponse(user, tokens);
-    }
-
-    private String resolveEmail(OAuthTempTokenPayload payload, OAuthRegisterRequest request) {
-        if (payload.getEmail() != null && !payload.getEmail().isBlank()) {
-            return payload.getEmail();
-        }
-        if (request.getEmail() != null && !request.getEmail().isBlank()) {
-            return request.getEmail();
-        }
-        throw new CustomException(ErrorCode.OAUTH_EMAIL_REQUIRED);
     }
 
     private void createTeacherProfile(User user, OAuthRegisterRequest.TeacherInfo info) {

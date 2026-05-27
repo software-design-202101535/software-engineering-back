@@ -18,7 +18,12 @@ public class OAuthRegisterRequest {
     @NotNull(message = "역할을 선택해주세요.")
     private Role role;
 
+    @NotBlank(message = "이메일을 입력해주세요.")
+    @Email(message = "올바른 이메일 형식이 아닙니다.")
     private String email;
+
+    @NotBlank(message = "이름을 입력해주세요.")
+    private String name;
 
     @Valid
     private TeacherInfo teacherInfo;
@@ -36,12 +41,13 @@ public class OAuthRegisterRequest {
     private boolean privacyAgreed;
 
     @SuppressWarnings("java:S107")
-    public static OAuthRegisterRequest of(String tempToken, Role role, String email,
+    public static OAuthRegisterRequest of(String tempToken, Role role, String email, String name,
                                            TeacherInfo teacherInfo, StudentInfo studentInfo, ParentInfo parentInfo) {
         OAuthRegisterRequest request = new OAuthRegisterRequest();
         request.tempToken = tempToken;
         request.role = role;
         request.email = email;
+        request.name = name;
         request.teacherInfo = teacherInfo;
         request.studentInfo = studentInfo;
         request.parentInfo = parentInfo;

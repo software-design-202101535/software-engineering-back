@@ -15,17 +15,12 @@ public class OAuthLoginResponse {
     private final boolean isNewUser;
     private final LoginResponse loginData;
     private final String tempToken;
-    private final String email;
-    private final String name;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private OAuthLoginResponse(boolean isNewUser, LoginResponse loginData,
-                                String tempToken, String email, String name) {
+    private OAuthLoginResponse(boolean isNewUser, LoginResponse loginData, String tempToken) {
         this.isNewUser = isNewUser;
         this.loginData = loginData;
         this.tempToken = tempToken;
-        this.email = email;
-        this.name = name;
     }
 
     public static OAuthLoginResponse existing(LoginResponse loginData) {
@@ -35,12 +30,10 @@ public class OAuthLoginResponse {
                 .build();
     }
 
-    public static OAuthLoginResponse newUser(String tempToken, String email, String name) {
+    public static OAuthLoginResponse newUser(String tempToken) {
         return OAuthLoginResponse.builder()
                 .isNewUser(true)
                 .tempToken(tempToken)
-                .email(email)
-                .name(name)
                 .build();
     }
 }
