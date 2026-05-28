@@ -48,9 +48,11 @@ public class AuthFacade {
         validatePasswordConfirm(request.getPassword(), request.getPasswordConfirm());
         User parent = userService.registerParentUser(
                 request.getEmail(), request.getPassword(), request.getName());
-        User childUser = userService.getStudentByEmail(request.getChildEmail());
-        StudentProfile childProfile = studentService.getProfileByUser(childUser);
-        studentService.linkParent(parent, childProfile);
+        for (String childEmail : request.getChildEmails()) {
+            User childUser = userService.getStudentByEmail(childEmail);
+            StudentProfile childProfile = studentService.getProfileByUser(childUser);
+            studentService.linkParent(parent, childProfile);
+        }
     }
 
     private void validatePasswordConfirm(String password, String passwordConfirm) {

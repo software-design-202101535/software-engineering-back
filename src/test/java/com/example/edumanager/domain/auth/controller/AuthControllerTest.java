@@ -8,6 +8,7 @@ import com.example.edumanager.global.security.UserDetailsImpl;
 import com.example.edumanager.global.security.exception.JwtAuthenticationEntryPoint;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -98,7 +99,7 @@ class AuthControllerTest {
         @DisplayName("TC-3-1. 유효한 요청 → 201")
         void success() throws Exception {
             ParentRegisterRequest request = ParentRegisterRequest.of(
-                    "parent@test.com", "password1!", "password1!", "홍부모", "student@test.com");
+                    "parent@test.com", "password1!", "password1!", "홍부모", List.of("student@test.com"));
 
             mockMvc.perform(post("/api/auth/register/parent")
                             .contentType(MediaType.APPLICATION_JSON)

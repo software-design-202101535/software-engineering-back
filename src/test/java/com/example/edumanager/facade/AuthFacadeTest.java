@@ -160,7 +160,7 @@ class AuthFacadeTest {
         @DisplayName("TC-3-1. 성공 → registerParentUser → getStudentByEmail → getProfileByUser → linkParent 순서")
         void success() {
             ParentRegisterRequest request = ParentRegisterRequest.of(
-                    "parent@test.com", "pass123!", "pass123!", "김부모", "student@test.com");
+                    "parent@test.com", "pass123!", "pass123!", "김부모", List.of("student@test.com"));
             when(userService.registerParentUser("parent@test.com", "pass123!", "김부모")).thenReturn(user);
             when(userService.getStudentByEmail("student@test.com")).thenReturn(childUser);
             when(studentService.getProfileByUser(childUser)).thenReturn(childProfile);
@@ -178,7 +178,7 @@ class AuthFacadeTest {
         @DisplayName("TC-3-2. 비밀번호 불일치 → PASSWORD_MISMATCH, registerParentUser never")
         void passwordMismatch() {
             ParentRegisterRequest request = ParentRegisterRequest.of(
-                    "parent@test.com", "pass123!", "different!", "김부모", "student@test.com");
+                    "parent@test.com", "pass123!", "different!", "김부모", List.of("student@test.com"));
 
             CustomException ex = assertThrows(CustomException.class,
                     () -> facade.registerParent(request));

@@ -145,7 +145,7 @@ class AuthLifecycleE2EIntegrationTest extends AbstractIntegrationTest {
             mockMvc.perform(post("/api/auth/register/parent")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(
-                                    ParentRegisterRequest.of(parentEmail, PASSWORD, PASSWORD, "엄마", childEmail))))
+                                    ParentRegisterRequest.of(parentEmail, PASSWORD, PASSWORD, "엄마", List.of(childEmail)))))
                     .andExpect(status().isCreated());
 
             User parentUser = userRepository.findByEmail(parentEmail).orElseThrow();
