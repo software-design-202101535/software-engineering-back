@@ -1,0 +1,180 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "title": "RPS (per scenario)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "id": 1,
+      "fieldConfig": {
+        "defaults": { "unit": "reqps", "color": { "mode": "palette-classic" } },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "showLegend": true }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (uri) (rate(http_server_requests_seconds_count{application=\"edumanager\",uri!~\"/actuator.*\"}[1m]))",
+          "legendFormat": "{{uri}}"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "title": "Latency p50 / p95 / p99 (overall)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "expr": "histogram_quantile(0.5, sum(rate(http_server_requests_seconds_bucket{application=\"edumanager\",uri!~\"/actuator.*\"}[1m])) by (le))", "legendFormat": "p50" },
+        { "refId": "B", "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{application=\"edumanager\",uri!~\"/actuator.*\"}[1m])) by (le))", "legendFormat": "p95" },
+        { "refId": "C", "expr": "histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket{application=\"edumanager\",uri!~\"/actuator.*\"}[1m])) by (le))", "legendFormat": "p99" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "title": "Error rate (5xx) %",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 8 },
+      "id": 3,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 0.01 },
+              { "color": "red", "value": 0.05 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": { "colorMode": "background", "graphMode": "area", "justifyMode": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(http_server_requests_seconds_count{application=\"edumanager\",status=~\"5..\"}[1m])) / sum(rate(http_server_requests_seconds_count{application=\"edumanager\"}[1m]))"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "title": "Current RPS",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 8 },
+      "id": 4,
+      "fieldConfig": { "defaults": { "unit": "reqps" } },
+      "options": { "colorMode": "value", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "refId": "A", "expr": "sum(rate(http_server_requests_seconds_count{application=\"edumanager\",uri!~\"/actuator.*\"}[1m]))" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "title": "p95 latency by endpoint",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "id": 5,
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "showLegend": true } },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{application=\"edumanager\",uri!~\"/actuator.*\"}[1m])) by (le, uri))",
+          "legendFormat": "{{uri}}"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "title": "JVM Heap used",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 16 },
+      "id": 6,
+      "fieldConfig": { "defaults": { "unit": "bytes" } },
+      "options": { "legend": { "displayMode": "list", "showLegend": true } },
+      "targets": [
+        { "refId": "A", "expr": "sum(jvm_memory_used_bytes{application=\"edumanager\",area=\"heap\"})", "legendFormat": "heap used" },
+        { "refId": "B", "expr": "sum(jvm_memory_max_bytes{application=\"edumanager\",area=\"heap\"})", "legendFormat": "heap max" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "title": "GC pause (rate)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 16 },
+      "id": 7,
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "options": { "legend": { "displayMode": "list", "showLegend": true } },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(jvm_gc_pause_seconds_sum{application=\"edumanager\"}[1m])",
+          "legendFormat": "{{action}} ({{cause}})"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "title": "Process CPU usage",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 16 },
+      "id": 8,
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 } },
+      "options": { "legend": { "displayMode": "list", "showLegend": true } },
+      "targets": [
+        { "refId": "A", "expr": "process_cpu_usage{application=\"edumanager\"}", "legendFormat": "app" },
+        { "refId": "B", "expr": "system_cpu_usage{application=\"edumanager\"}", "legendFormat": "system" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "title": "HikariCP connections",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "id": 9,
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "options": { "legend": { "displayMode": "list", "showLegend": true } },
+      "targets": [
+        { "refId": "A", "expr": "hikaricp_connections_active{application=\"edumanager\"}", "legendFormat": "active" },
+        { "refId": "B", "expr": "hikaricp_connections_idle{application=\"edumanager\"}", "legendFormat": "idle" },
+        { "refId": "C", "expr": "hikaricp_connections_pending{application=\"edumanager\"}", "legendFormat": "pending (waiting)" }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "title": "Tomcat busy threads",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "id": 10,
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "options": { "legend": { "displayMode": "list", "showLegend": true } },
+      "targets": [
+        { "refId": "A", "expr": "tomcat_threads_busy_threads{application=\"edumanager\"}", "legendFormat": "busy" },
+        { "refId": "B", "expr": "tomcat_threads_current_threads{application=\"edumanager\"}", "legendFormat": "current" },
+        { "refId": "C", "expr": "tomcat_threads_config_max_threads{application=\"edumanager\"}", "legendFormat": "max" }
+      ]
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "tags": ["edumanager", "golden-signals"],
+  "templating": { "list": [] },
+  "time": { "from": "now-15m", "to": "now" },
+  "timezone": "",
+  "title": "EduManager Golden Signals",
+  "uid": "edumanager-golden",
+  "version": 1,
+  "weekStart": ""
+}
