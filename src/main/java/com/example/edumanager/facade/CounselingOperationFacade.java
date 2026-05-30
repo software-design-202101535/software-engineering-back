@@ -2,6 +2,7 @@ package com.example.edumanager.facade;
 
 import com.example.edumanager.domain.counseling.dto.CounselingResponse;
 import com.example.edumanager.domain.counseling.dto.CreateCounselingRequest;
+import com.example.edumanager.domain.counseling.dto.SharedCounselingResponse;
 import com.example.edumanager.domain.counseling.dto.UpdateCounselingRequest;
 import com.example.edumanager.domain.counseling.dto.UpdateCounselingShareRequest;
 import com.example.edumanager.domain.counseling.entity.Counseling;
@@ -11,6 +12,7 @@ import com.example.edumanager.domain.student.service.StudentService;
 import com.example.edumanager.domain.teacher.entity.TeacherProfile;
 import com.example.edumanager.domain.teacher.service.TeacherService;
 import com.example.edumanager.domain.user.entity.Role;
+import com.example.edumanager.domain.user.entity.School;
 import com.example.edumanager.global.exception.CustomException;
 import com.example.edumanager.global.exception.ErrorCode;
 import com.example.edumanager.global.security.UserDetailsImpl;
@@ -34,6 +36,21 @@ public class CounselingOperationFacade {
         studentService.getById(studentId);
         return fetchCounselings(studentId, userDetails.getUserId(), year, month).stream()
                 .map(CounselingResponse::of).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<SharedCounselingResponse> getSharedList(int year, Integer month, Integer grade,
+                                                        Integer classNum, String name, UserDetailsImpl userDetails) {
+        checkTeacher(userDetails.getRole());
+        School school = resolveRequesterSchool(userDetails.getUserId());
+        return counselingService.findSharedForTeacher(school, userDetails.getUserId(), year, month, grade, classNum, name)
+                .stream()
+                .map(SharedCounselingResponse::of)
+                .toList();
+    }
+
+    private School resolveRequesterSchool(Long teacherUserId) {
+        return teacherService.getProfileByUserId(teacherUserId).getSchool();
     }
 
     @Transactional

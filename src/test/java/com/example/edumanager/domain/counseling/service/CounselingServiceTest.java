@@ -7,6 +7,7 @@ import com.example.edumanager.domain.counseling.entity.Counseling;
 import com.example.edumanager.domain.counseling.repository.CounselingRepository;
 import com.example.edumanager.domain.student.entity.StudentProfile;
 import com.example.edumanager.domain.teacher.entity.TeacherProfile;
+import com.example.edumanager.domain.user.entity.School;
 import com.example.edumanager.global.exception.CustomException;
 import com.example.edumanager.global.exception.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
@@ -185,6 +186,28 @@ class CounselingServiceTest {
             counselingService.delete(counseling);
 
             verify(counselingRepository).delete(counseling);
+        }
+    }
+
+    @Nested
+    @DisplayName("8. findSharedForTeacher()")
+    class FindSharedForTeacher {
+
+        @Test
+        @DisplayName("TC-8-1. 성공 → repository 위임, 결과 반환")
+        void success() {
+            Counseling counseling = mock(Counseling.class);
+            when(counselingRepository.findSharedForTeacher(School.SUNRIN_HIGH_SCHOOL, 10L, 2026, 5, 1, 2, "김"))
+                    .thenReturn(List.of(counseling));
+
+            List<Counseling> result = counselingService.findSharedForTeacher(
+                    School.SUNRIN_HIGH_SCHOOL, 10L, 2026, 5, 1, 2, "김");
+
+            assertAll(
+                    () -> verify(counselingRepository).findSharedForTeacher(
+                            School.SUNRIN_HIGH_SCHOOL, 10L, 2026, 5, 1, 2, "김"),
+                    () -> assertEquals(List.of(counseling), result)
+            );
         }
     }
 }

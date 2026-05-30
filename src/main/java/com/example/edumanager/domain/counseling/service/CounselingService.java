@@ -7,6 +7,7 @@ import com.example.edumanager.domain.counseling.entity.Counseling;
 import com.example.edumanager.domain.counseling.repository.CounselingRepository;
 import com.example.edumanager.domain.student.entity.StudentProfile;
 import com.example.edumanager.domain.teacher.entity.TeacherProfile;
+import com.example.edumanager.domain.user.entity.School;
 import com.example.edumanager.global.exception.CustomException;
 import com.example.edumanager.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,11 @@ public class CounselingService {
 
     public List<Counseling> findForTeacherByYearAndMonth(Long studentId, Long teacherId, int year, int month) {
         return counselingRepository.findByStudentForTeacherByYearAndMonth(studentId, teacherId, year, month);
+    }
+
+    public List<Counseling> findSharedForTeacher(School school, Long requesterUserId, int year,
+                                                 Integer month, Integer grade, Integer classNum, String name) {
+        return counselingRepository.findSharedForTeacher(school, requesterUserId, year, month, grade, classNum, name);
     }
 
     public Counseling save(StudentProfile student, TeacherProfile teacher, CreateCounselingRequest request) {

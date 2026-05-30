@@ -1,6 +1,7 @@
 package com.example.edumanager.facade;
 
 import com.example.edumanager.domain.counseling.dto.CreateCounselingRequest;
+import com.example.edumanager.domain.counseling.dto.SharedCounselingResponse;
 import com.example.edumanager.domain.counseling.dto.UpdateCounselingRequest;
 import com.example.edumanager.domain.counseling.dto.UpdateCounselingShareRequest;
 import com.example.edumanager.domain.counseling.entity.Counseling;
@@ -10,6 +11,7 @@ import com.example.edumanager.domain.student.service.StudentService;
 import com.example.edumanager.domain.teacher.entity.TeacherProfile;
 import com.example.edumanager.domain.teacher.service.TeacherService;
 import com.example.edumanager.domain.user.entity.Role;
+import com.example.edumanager.domain.user.entity.School;
 import com.example.edumanager.domain.user.entity.User;
 import com.example.edumanager.global.exception.CustomException;
 import com.example.edumanager.global.exception.ErrorCode;
@@ -46,6 +48,7 @@ class CounselingOperationFacadeTest {
     @Mock StudentProfile studentProfile;
     @Mock TeacherProfile teacherProfile;
     @Mock User teacherUser;
+    @Mock User studentUser;
     @Mock Counseling counseling;
 
     private void stubCounselingForResponse() {
@@ -65,6 +68,76 @@ class CounselingOperationFacadeTest {
         when(counseling.getTeacher()).thenReturn(teacherProfile);
         when(teacherProfile.getUser()).thenReturn(teacherUser);
         when(teacherUser.getId()).thenReturn(authorUserId);
+    }
+
+    private void stubSharedCounselingForResponse() {
+        when(counseling.getId()).thenReturn(101L);
+        when(counseling.getStudent()).thenReturn(studentProfile);
+        when(studentProfile.getId()).thenReturn(12L);
+        when(studentProfile.getUser()).thenReturn(studentUser);
+        when(studentUser.getName()).thenReturn("김영희");
+        when(studentProfile.getGrade()).thenReturn(1);
+        when(studentProfile.getClassNum()).thenReturn(4);
+        when(studentProfile.getNumber()).thenReturn(12);
+        when(counseling.getTeacher()).thenReturn(teacherProfile);
+        when(teacherProfile.getUser()).thenReturn(teacherUser);
+        when(teacherUser.getId()).thenReturn(5L);
+        when(teacherUser.getName()).thenReturn("김교사");
+        when(counseling.getDate()).thenReturn(LocalDate.of(2026, 5, 20));
+        when(counseling.getContent()).thenReturn("상담 내용");
+        when(counseling.getNextPlan()).thenReturn("다음 계획");
+        when(counseling.getNextDate()).thenReturn(LocalDate.of(2026, 6, 10));
+        when(counseling.isSharedWithTeachers()).thenReturn(true);
+        when(counseling.getCreatedAt()).thenReturn(LocalDateTime.of(2026, 5, 20, 14, 30));
+    }
+
+    @Nested
+    @DisplayName("0. getSharedList()")
+    class GetSharedList {
+
+        @Test
+        @DisplayName("TC-0-1. 비TEACHER → STUDENT_ACCESS_DENIED, 어떤 서비스도 호출 안 함")
+        void nonTeacher() {
+            UserDetailsImpl student = UserDetailsImpl.create(1L, Role.STUDENT);
+
+            CustomException ex = assertThrows(CustomException.class,
+                    () -> facade.getSharedList(2026, null, null, null, null, student));
+
+            assertAll(
+                    () -> assertEquals(ErrorCode.STUDENT_ACCESS_DENIED, ex.getErrorCode()),
+                    () -> verify(teacherService, never()).getProfileByUserId(any()),
+                    () -> verify(counselingService, never())
+                            .findSharedForTeacher(any(), any(), anyInt(), any(), any(), any(), any())
+            );
+        }
+
+        @Test
+        @DisplayName("TC-0-2. TEACHER → 요청자 school로 findSharedForTeacher 위임 + 매핑 결과 반환")
+        void teacher() {
+            UserDetailsImpl teacher = UserDetailsImpl.create(10L, Role.TEACHER);
+            when(teacherService.getProfileByUserId(10L)).thenReturn(teacherProfile);
+            when(teacherProfile.getSchool()).thenReturn(School.SUNRIN_HIGH_SCHOOL);
+            when(counselingService.findSharedForTeacher(School.SUNRIN_HIGH_SCHOOL, 10L, 2026, 5, 1, 4, "김"))
+                    .thenReturn(List.of(counseling));
+            stubSharedCounselingForResponse();
+
+            List<SharedCounselingResponse> result = facade.getSharedList(2026, 5, 1, 4, "김", teacher);
+
+            SharedCounselingResponse first = result.get(0);
+            assertAll(
+                    () -> assertEquals(1, result.size()),
+                    () -> verify(counselingService)
+                            .findSharedForTeacher(School.SUNRIN_HIGH_SCHOOL, 10L, 2026, 5, 1, 4, "김"),
+                    () -> assertEquals(101L, first.getId()),
+                    () -> assertEquals(12L, first.getStudentId()),
+                    () -> assertEquals("김영희", first.getStudentName()),
+                    () -> assertEquals(1, first.getGrade()),
+                    () -> assertEquals(4, first.getClassNum()),
+                    () -> assertEquals(12, first.getNumber()),
+                    () -> assertEquals(5L, first.getTeacherId()),
+                    () -> assertEquals("김교사", first.getTeacherName())
+            );
+        }
     }
 
     @Nested
