@@ -38,6 +38,10 @@ services:
       KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID}
       KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET}
       KAKAO_REDIRECT_URI: ${KAKAO_REDIRECT_URI}
+      FCM_ENABLED: ${FCM_ENABLED:-false}
+      FCM_CREDENTIALS_PATH: /app/firebase-adminsdk.json
+    volumes:
+      - ./firebase-adminsdk.json:/app/firebase-adminsdk.json:ro
     depends_on:
       mysql:
         condition: service_healthy

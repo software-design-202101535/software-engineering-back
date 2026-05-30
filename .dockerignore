@@ -14,3 +14,4 @@ docker-compose.yml
 .gitattributes
 application.yml
 application-local.yml
+**/firebase-adminsdk*.json

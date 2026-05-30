@@ -107,11 +107,12 @@ jobs:
           KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET }}
           KAKAO_REDIRECT_URI: ${{ secrets.KAKAO_REDIRECT_URI }}
           GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+          FCM_CREDENTIALS_B64: ${{ secrets.FCM_CREDENTIALS_B64 }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: DOCKER_USERNAME,DB_ROOT_PASSWORD,DB_NAME,DB_USERNAME,DB_PASSWORD,JWT_SECRET,KAKAO_CLIENT_ID,KAKAO_CLIENT_SECRET,KAKAO_REDIRECT_URI,GRAFANA_ADMIN_PASSWORD
+          envs: DOCKER_USERNAME,DB_ROOT_PASSWORD,DB_NAME,DB_USERNAME,DB_PASSWORD,JWT_SECRET,KAKAO_CLIENT_ID,KAKAO_CLIENT_SECRET,KAKAO_REDIRECT_URI,GRAFANA_ADMIN_PASSWORD,FCM_CREDENTIALS_B64
           script: |
             cd ~/edumanager
             export DOCKER_USERNAME=$DOCKER_USERNAME
@@ -125,6 +126,9 @@ jobs:
             export KAKAO_REDIRECT_URI=$KAKAO_REDIRECT_URI
             export GRAFANA_ADMIN_PASSWORD=$GRAFANA_ADMIN_PASSWORD
             export SPRING_PROFILES_ACTIVE=prod
+            export FCM_ENABLED=true
+
+            echo "$FCM_CREDENTIALS_B64" | base64 -d > firebase-adminsdk.json
 
             docker pull $DOCKER_USERNAME/edumanager:latest
             docker compose down
