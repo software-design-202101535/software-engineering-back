@@ -7,7 +7,7 @@ import com.example.edumanager.domain.feedback.dto.UpdateFeedbackVisibilityReques
 import com.example.edumanager.domain.feedback.entity.Feedback;
 import com.example.edumanager.domain.feedback.entity.FeedbackCategory;
 import com.example.edumanager.domain.feedback.service.FeedbackService;
-import com.example.edumanager.domain.notification.event.FeedbackVisibilityChangedEvent;
+import com.example.edumanager.domain.notification.event.FeedbackSharedEvent;
 import com.example.edumanager.domain.student.entity.StudentProfile;
 import com.example.edumanager.domain.student.service.StudentService;
 import com.example.edumanager.domain.teacher.entity.TeacherProfile;
@@ -51,7 +51,9 @@ public class FeedbackOperationFacade {
         checkTeacher(userDetails.getRole());
         StudentProfile student = studentService.getById(studentId);
         TeacherProfile teacher = teacherService.getProfileByUserId(userDetails.getUserId());
-        return FeedbackResponse.of(feedbackService.save(student, teacher, request));
+        Feedback saved = feedbackService.save(student, teacher, request);
+        publishIfNewlyShared(saved, studentId, false, false);
+        return FeedbackResponse.of(saved);
     }
 
     @Transactional
@@ -81,7 +83,7 @@ public class FeedbackOperationFacade {
         boolean newlyVisibleToStudent = !wasVisibleToStudent && updated.isStudentVisible();
         boolean newlyVisibleToParent = !wasVisibleToParent && updated.isParentVisible();
         if (!newlyVisibleToStudent && !newlyVisibleToParent) return;
-        eventPublisher.publishEvent(FeedbackVisibilityChangedEvent.of(
+        eventPublisher.publishEvent(FeedbackSharedEvent.of(
                 updated.getId(), studentId,
                 newlyVisibleToStudent, newlyVisibleToParent,
                 updated.getCategory().name()));

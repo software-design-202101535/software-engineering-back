@@ -5,7 +5,7 @@ import com.example.edumanager.domain.devicetoken.repository.DeviceTokenRepositor
 import com.example.edumanager.domain.notification.entity.Notification;
 import com.example.edumanager.domain.notification.entity.NotificationType;
 import com.example.edumanager.domain.notification.entity.ReferenceType;
-import com.example.edumanager.domain.notification.event.FeedbackVisibilityChangedEvent;
+import com.example.edumanager.domain.notification.event.FeedbackSharedEvent;
 import com.example.edumanager.domain.notification.event.GradeBatchProcessedEvent;
 import com.example.edumanager.domain.notification.repository.NotificationRepository;
 import com.example.edumanager.domain.student.entity.ParentStudent;
@@ -61,18 +61,18 @@ class NotificationEventIntegrationTest extends AbstractIntegrationTest {
 
         TransactionTemplate tt = new TransactionTemplate(transactionManager);
         tt.executeWithoutResult(status ->
-                eventPublisher.publishEvent(GradeBatchProcessedEvent.of(student.getId(), 3)));
+                eventPublisher.publishEvent(GradeBatchProcessedEvent.of(student.getId())));
 
         List<Notification> notifications =
-                notificationRepository.findByUserIdOrderByCreatedAtDesc(student.getUser().getId());
+                notificationRepository.findByUserIdOrderByCreatedAtDescIdDesc(student.getUser().getId());
         assertThat(notifications).hasSize(1);
         assertThat(notifications.get(0).getType()).isEqualTo(NotificationType.GRADE_UPDATED);
-        assertThat(notifications.get(0).getMessage()).isEqualTo("성적 3건이 등록/수정되었습니다.");
-        verify(fcmClient).send(List.of("stu-token"), "성적이 업데이트되었습니다", "성적 3건이 등록/수정되었습니다.");
+        assertThat(notifications.get(0).getMessage()).isEqualTo("성적이 등록/수정되었습니다.");
+        verify(fcmClient).send(List.of("stu-token"), "성적이 업데이트되었습니다", "성적이 등록/수정되었습니다.");
     }
 
     @Test
-    @DisplayName("TC-E-3. FeedbackVisibilityChangedEvent commit 시 학생+연결학부모만 알림 + 미연결 학부모/타학생은 노이즈로 제외")
+    @DisplayName("TC-E-3. FeedbackSharedEvent commit 시 학생+연결학부모만 알림 + 미연결 학부모/타학생은 노이즈로 제외")
     void feedbackVisibilityEvent_routesOnlyToLinkedRecipients() {
         StudentProfile student = insertStudent("e3-stu@test.com", School.SUNRIN_HIGH_SCHOOL, 1, 1, 3);
         User linkedParent = insertUser("e3-parent-linked@test.com", "pw", Role.PARENT);
@@ -87,17 +87,17 @@ class NotificationEventIntegrationTest extends AbstractIntegrationTest {
 
         TransactionTemplate tt = new TransactionTemplate(transactionManager);
         tt.executeWithoutResult(status ->
-                eventPublisher.publishEvent(FeedbackVisibilityChangedEvent.of(
+                eventPublisher.publishEvent(FeedbackSharedEvent.of(
                         7L, student.getId(), true, true, "GRADE")));
 
         List<Notification> studentNotifs =
-                notificationRepository.findByUserIdOrderByCreatedAtDesc(student.getUser().getId());
+                notificationRepository.findByUserIdOrderByCreatedAtDescIdDesc(student.getUser().getId());
         List<Notification> linkedParentNotifs =
-                notificationRepository.findByUserIdOrderByCreatedAtDesc(linkedParent.getId());
+                notificationRepository.findByUserIdOrderByCreatedAtDescIdDesc(linkedParent.getId());
         List<Notification> unlinkedParentNotifs =
-                notificationRepository.findByUserIdOrderByCreatedAtDesc(unlinkedParent.getId());
+                notificationRepository.findByUserIdOrderByCreatedAtDescIdDesc(unlinkedParent.getId());
         List<Notification> otherStudentNotifs =
-                notificationRepository.findByUserIdOrderByCreatedAtDesc(otherStudent.getUser().getId());
+                notificationRepository.findByUserIdOrderByCreatedAtDescIdDesc(otherStudent.getUser().getId());
 
         assertThat(studentNotifs).hasSize(1);
         assertThat(studentNotifs.get(0).getType()).isEqualTo(NotificationType.FEEDBACK_SHARED);
@@ -120,11 +120,11 @@ class NotificationEventIntegrationTest extends AbstractIntegrationTest {
 
         TransactionTemplate tt = new TransactionTemplate(transactionManager);
         tt.executeWithoutResult(status -> {
-            eventPublisher.publishEvent(GradeBatchProcessedEvent.of(student.getId(), 3));
+            eventPublisher.publishEvent(GradeBatchProcessedEvent.of(student.getId()));
             status.setRollbackOnly();
         });
 
-        assertThat(notificationRepository.findByUserIdOrderByCreatedAtDesc(student.getUser().getId()))
+        assertThat(notificationRepository.findByUserIdOrderByCreatedAtDescIdDesc(student.getUser().getId()))
                 .isEmpty();
         verifyNoInteractions(fcmClient);
     }

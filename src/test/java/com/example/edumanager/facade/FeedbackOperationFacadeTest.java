@@ -13,7 +13,7 @@ import com.example.edumanager.domain.teacher.service.TeacherService;
 import com.example.edumanager.domain.user.entity.Role;
 import com.example.edumanager.domain.user.entity.User;
 import com.example.edumanager.domain.user.service.UserService;
-import com.example.edumanager.domain.notification.event.FeedbackVisibilityChangedEvent;
+import com.example.edumanager.domain.notification.event.FeedbackSharedEvent;
 import com.example.edumanager.global.exception.CustomException;
 import com.example.edumanager.global.exception.ErrorCode;
 import com.example.edumanager.global.security.UserDetailsImpl;
@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -235,6 +236,59 @@ class FeedbackOperationFacadeTest {
     }
 
     @Nested
+    @DisplayName("2-P. create() publishEvent 분기")
+    class CreatePublish {
+
+        private final UserDetailsImpl teacher = UserDetailsImpl.create(10L, Role.TEACHER);
+
+        private CreateFeedbackRequest request(boolean studentVisible, boolean parentVisible) {
+            return CreateFeedbackRequest.of(
+                    FeedbackCategory.GRADE, LocalDate.of(2025, 3, 14), "내용", studentVisible, parentVisible);
+        }
+
+        private void stubCreate(boolean studentVisible, boolean parentVisible) {
+            when(studentService.getById(2L)).thenReturn(studentProfile);
+            when(teacherService.getProfileByUserId(10L)).thenReturn(teacherProfile);
+            when(feedbackService.save(eq(studentProfile), eq(teacherProfile), any())).thenReturn(feedback);
+            when(feedback.getId()).thenReturn(5L);
+            when(feedback.isStudentVisible()).thenReturn(studentVisible);
+            when(feedback.isParentVisible()).thenReturn(parentVisible);
+            stubFeedbackForResponse();
+        }
+
+        @ParameterizedTest(name = "student={0}, parent={1}")
+        @CsvSource({"true, true", "true, false", "false, true"})
+        @DisplayName("TC-2P-1. 공개 상태로 생성 → publish (생성 시 공개값이 곧 newlyVisible)")
+        void publishesWhenCreatedVisible(boolean studentVisible, boolean parentVisible) {
+            stubCreate(studentVisible, parentVisible);
+
+            facade.create(2L, request(studentVisible, parentVisible), teacher);
+
+            ArgumentCaptor<FeedbackSharedEvent> captor =
+                    ArgumentCaptor.forClass(FeedbackSharedEvent.class);
+            verify(eventPublisher).publishEvent(captor.capture());
+            FeedbackSharedEvent event = captor.getValue();
+            assertAll(
+                    () -> assertEquals(5L, event.getFeedbackId()),
+                    () -> assertEquals(2L, event.getStudentId()),
+                    () -> assertEquals(studentVisible, event.isNewlyVisibleToStudent()),
+                    () -> assertEquals(parentVisible, event.isNewlyVisibleToParent()),
+                    () -> assertEquals("GRADE", event.getCategoryName())
+            );
+        }
+
+        @Test
+        @DisplayName("TC-2P-2. 비공개로 생성 (false/false) → publish 없음")
+        void noPublishWhenCreatedHidden() {
+            stubCreate(false, false);
+
+            facade.create(2L, request(false, false), teacher);
+
+            verify(eventPublisher, never()).publishEvent(any());
+        }
+    }
+
+    @Nested
     @DisplayName("3. update()")
     class Update {
 
@@ -369,9 +423,9 @@ class FeedbackOperationFacadeTest {
             when(feedback.getCategory()).thenReturn(FeedbackCategory.GRADE);
         }
 
-        private FeedbackVisibilityChangedEvent capturePublished() {
-            ArgumentCaptor<FeedbackVisibilityChangedEvent> captor =
-                    ArgumentCaptor.forClass(FeedbackVisibilityChangedEvent.class);
+        private FeedbackSharedEvent capturePublished() {
+            ArgumentCaptor<FeedbackSharedEvent> captor =
+                    ArgumentCaptor.forClass(FeedbackSharedEvent.class);
             verify(eventPublisher).publishEvent(captor.capture());
             return captor.getValue();
         }
@@ -384,7 +438,7 @@ class FeedbackOperationFacadeTest {
 
             facade.updateVisibility(2L, 5L, UpdateFeedbackVisibilityRequest.of(true, true), teacher());
 
-            FeedbackVisibilityChangedEvent event = capturePublished();
+            FeedbackSharedEvent event = capturePublished();
             assertAll(
                     () -> assertEquals(5L, event.getFeedbackId()),
                     () -> assertEquals(2L, event.getStudentId()),
@@ -402,7 +456,7 @@ class FeedbackOperationFacadeTest {
 
             facade.updateVisibility(2L, 5L, UpdateFeedbackVisibilityRequest.of(true, false), teacher());
 
-            FeedbackVisibilityChangedEvent event = capturePublished();
+            FeedbackSharedEvent event = capturePublished();
             assertAll(
                     () -> assertTrue(event.isNewlyVisibleToStudent()),
                     () -> assertFalse(event.isNewlyVisibleToParent())
@@ -417,7 +471,7 @@ class FeedbackOperationFacadeTest {
 
             facade.updateVisibility(2L, 5L, UpdateFeedbackVisibilityRequest.of(false, true), teacher());
 
-            FeedbackVisibilityChangedEvent event = capturePublished();
+            FeedbackSharedEvent event = capturePublished();
             assertAll(
                     () -> assertFalse(event.isNewlyVisibleToStudent()),
                     () -> assertTrue(event.isNewlyVisibleToParent())

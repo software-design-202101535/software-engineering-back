@@ -45,8 +45,8 @@ class NotificationRepositoryTest extends AbstractRepositoryIntegrationTest {
     }
 
     @Test
-    @DisplayName("TC-N-2. findByUserIdOrderByCreatedAtDesc — 본인 알림만 최신순, 타 user 알림은 제외")
-    void findByUserIdOrderByCreatedAtDesc_ownOnlyAndOrdered() {
+    @DisplayName("TC-N-2. findByUserIdOrderByCreatedAtDescIdDesc — 본인 알림만 최신순, 타 user 알림은 제외")
+    void findByUserIdOrderByCreatedAtDescIdDesc_ownOnlyAndOrdered() {
         User me = persistUser("me@test.com");
         User other = persistUser("other@test.com");
         Notification mineOld = persistNotification(me, false);
@@ -55,7 +55,7 @@ class NotificationRepositoryTest extends AbstractRepositoryIntegrationTest {
         em.flush();
         em.clear();
 
-        List<Notification> result = notificationRepository.findByUserIdOrderByCreatedAtDesc(me.getId());
+        List<Notification> result = notificationRepository.findByUserIdOrderByCreatedAtDescIdDesc(me.getId());
 
         assertThat(result).extracting(Notification::getId)
                 .containsExactly(mineNew.getId(), mineOld.getId())

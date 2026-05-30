@@ -3,7 +3,7 @@ package com.example.edumanager.domain.notification.listener;
 import com.example.edumanager.domain.devicetoken.service.DeviceTokenService;
 import com.example.edumanager.domain.notification.entity.NotificationType;
 import com.example.edumanager.domain.notification.entity.ReferenceType;
-import com.example.edumanager.domain.notification.event.FeedbackVisibilityChangedEvent;
+import com.example.edumanager.domain.notification.event.FeedbackSharedEvent;
 import com.example.edumanager.domain.notification.event.GradeBatchProcessedEvent;
 import com.example.edumanager.domain.notification.service.NotificationService;
 import com.example.edumanager.domain.student.entity.StudentProfile;
@@ -44,7 +44,7 @@ public class NotificationEventListener {
                 recipients,
                 NotificationType.GRADE_UPDATED,
                 "성적이 업데이트되었습니다",
-                String.format("성적 %d건이 등록/수정되었습니다.", event.getCount()),
+                "성적이 등록/수정되었습니다.",
                 event.getStudentId(),
                 ReferenceType.GRADE,
                 student);
@@ -53,7 +53,7 @@ public class NotificationEventListener {
     @Async(AsyncConfig.NOTIFICATION_EXECUTOR)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void onFeedbackVisibilityChanged(FeedbackVisibilityChangedEvent event) {
+    public void onFeedbackShared(FeedbackSharedEvent event) {
         if (!event.hasRecipient()) return;
         StudentProfile student = studentService.getById(event.getStudentId());
         List<User> recipients = collectVisibleRecipients(event, student);
@@ -102,7 +102,7 @@ public class NotificationEventListener {
         return recipients;
     }
 
-    private List<User> collectVisibleRecipients(FeedbackVisibilityChangedEvent event, StudentProfile student) {
+    private List<User> collectVisibleRecipients(FeedbackSharedEvent event, StudentProfile student) {
         List<User> recipients = new ArrayList<>();
         if (event.isNewlyVisibleToStudent()) {
             recipients.add(student.getUser());

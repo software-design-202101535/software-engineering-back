@@ -3,7 +3,7 @@ package com.example.edumanager.domain.notification.event;
 import lombok.Getter;
 
 @Getter
-public class FeedbackVisibilityChangedEvent {
+public class FeedbackSharedEvent {
 
     private final Long feedbackId;
     private final Long studentId;
@@ -11,9 +11,9 @@ public class FeedbackVisibilityChangedEvent {
     private final boolean newlyVisibleToParent;
     private final String categoryName;
 
-    private FeedbackVisibilityChangedEvent(Long feedbackId, Long studentId,
-                                           boolean newlyVisibleToStudent, boolean newlyVisibleToParent,
-                                           String categoryName) {
+    private FeedbackSharedEvent(Long feedbackId, Long studentId,
+                               boolean newlyVisibleToStudent, boolean newlyVisibleToParent,
+                               String categoryName) {
         this.feedbackId = feedbackId;
         this.studentId = studentId;
         this.newlyVisibleToStudent = newlyVisibleToStudent;
@@ -21,10 +21,10 @@ public class FeedbackVisibilityChangedEvent {
         this.categoryName = categoryName;
     }
 
-    public static FeedbackVisibilityChangedEvent of(Long feedbackId, Long studentId,
-                                                    boolean newlyVisibleToStudent, boolean newlyVisibleToParent,
-                                                    String categoryName) {
-        return new FeedbackVisibilityChangedEvent(feedbackId, studentId,
+    public static FeedbackSharedEvent of(Long feedbackId, Long studentId,
+                                         boolean newlyVisibleToStudent, boolean newlyVisibleToParent,
+                                         String categoryName) {
+        return new FeedbackSharedEvent(feedbackId, studentId,
                 newlyVisibleToStudent, newlyVisibleToParent, categoryName);
     }
 

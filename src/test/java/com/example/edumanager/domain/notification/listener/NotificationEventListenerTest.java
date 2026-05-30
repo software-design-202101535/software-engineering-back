@@ -3,7 +3,7 @@ package com.example.edumanager.domain.notification.listener;
 import com.example.edumanager.domain.devicetoken.service.DeviceTokenService;
 import com.example.edumanager.domain.notification.entity.NotificationType;
 import com.example.edumanager.domain.notification.entity.ReferenceType;
-import com.example.edumanager.domain.notification.event.FeedbackVisibilityChangedEvent;
+import com.example.edumanager.domain.notification.event.FeedbackSharedEvent;
 import com.example.edumanager.domain.notification.event.GradeBatchProcessedEvent;
 import com.example.edumanager.domain.notification.service.NotificationService;
 import com.example.edumanager.domain.student.entity.StudentProfile;
@@ -62,13 +62,13 @@ class NotificationEventListenerTest {
             when(deviceTokenService.findTokensByUserIds(List.of(100L, 200L, 201L)))
                     .thenReturn(List.of("tok-s", "tok-p1", "tok-p2"));
 
-            listener.onGradeBatchProcessed(GradeBatchProcessedEvent.of(10L, 3));
+            listener.onGradeBatchProcessed(GradeBatchProcessedEvent.of(10L));
 
             verify(notificationService).createAll(
                     List.of(studentUser, parentUser1, parentUser2),
                     NotificationType.GRADE_UPDATED,
                     "성적이 업데이트되었습니다",
-                    "성적 3건이 등록/수정되었습니다.",
+                    "성적이 등록/수정되었습니다.",
                     10L,
                     ReferenceType.GRADE,
                     10L,
@@ -76,7 +76,7 @@ class NotificationEventListenerTest {
             verify(fcmClient).send(
                     List.of("tok-s", "tok-p1", "tok-p2"),
                     "성적이 업데이트되었습니다",
-                    "성적 3건이 등록/수정되었습니다.");
+                    "성적이 등록/수정되었습니다.");
         }
 
         @Test
@@ -90,13 +90,13 @@ class NotificationEventListenerTest {
             when(studentUser.getId()).thenReturn(100L);
             when(deviceTokenService.findTokensByUserIds(List.of(100L))).thenReturn(List.of("tok-s"));
 
-            listener.onGradeBatchProcessed(GradeBatchProcessedEvent.of(10L, 1));
+            listener.onGradeBatchProcessed(GradeBatchProcessedEvent.of(10L));
 
             verify(notificationService).createAll(
                     List.of(studentUser),
                     NotificationType.GRADE_UPDATED,
                     "성적이 업데이트되었습니다",
-                    "성적 1건이 등록/수정되었습니다.",
+                    "성적이 등록/수정되었습니다.",
                     10L,
                     ReferenceType.GRADE,
                     10L,
@@ -104,18 +104,18 @@ class NotificationEventListenerTest {
             verify(fcmClient).send(
                     List.of("tok-s"),
                     "성적이 업데이트되었습니다",
-                    "성적 1건이 등록/수정되었습니다.");
+                    "성적이 등록/수정되었습니다.");
         }
     }
 
     @Nested
-    @DisplayName("2. onFeedbackVisibilityChanged()")
-    class OnFeedbackVisibilityChanged {
+    @DisplayName("2. onFeedbackShared()")
+    class OnFeedbackShared {
 
         @Test
         @DisplayName("TC-2-1. 신규 공개 대상 없음 → 어떤 처리도 안 함")
         void noRecipient() {
-            listener.onFeedbackVisibilityChanged(FeedbackVisibilityChangedEvent.of(
+            listener.onFeedbackShared(FeedbackSharedEvent.of(
                     5L, 10L, false, false, "ATTITUDE"));
 
             verify(notificationService, never()).createAll(any(), any(), any(), any(), anyLong(), any(), anyLong(), any());
@@ -133,7 +133,7 @@ class NotificationEventListenerTest {
             when(studentUser.getId()).thenReturn(100L);
             when(deviceTokenService.findTokensByUserIds(List.of(100L))).thenReturn(List.of("tok-s"));
 
-            listener.onFeedbackVisibilityChanged(FeedbackVisibilityChangedEvent.of(
+            listener.onFeedbackShared(FeedbackSharedEvent.of(
                     5L, 10L, true, false, "ATTITUDE"));
 
             verify(notificationService).createAll(
@@ -165,7 +165,7 @@ class NotificationEventListenerTest {
             when(deviceTokenService.findTokensByUserIds(List.of(100L, 200L)))
                     .thenReturn(List.of("tok-s", "tok-p1"));
 
-            listener.onFeedbackVisibilityChanged(FeedbackVisibilityChangedEvent.of(
+            listener.onFeedbackShared(FeedbackSharedEvent.of(
                     5L, 10L, true, true, "GRADE"));
 
             verify(notificationService).createAll(
@@ -190,7 +190,7 @@ class NotificationEventListenerTest {
             when(student.getId()).thenReturn(10L);
             when(studentService.getParentsByStudentId(10L)).thenReturn(List.of());
 
-            listener.onFeedbackVisibilityChanged(FeedbackVisibilityChangedEvent.of(
+            listener.onFeedbackShared(FeedbackSharedEvent.of(
                     5L, 10L, false, true, "ATTITUDE"));
 
             verify(notificationService, never()).createAll(any(), any(), any(), any(), anyLong(), any(), anyLong(), any());
@@ -210,7 +210,7 @@ class NotificationEventListenerTest {
             when(deviceTokenService.findTokensByUserIds(List.of(200L, 201L)))
                     .thenReturn(List.of("tok-p1", "tok-p2"));
 
-            listener.onFeedbackVisibilityChanged(FeedbackVisibilityChangedEvent.of(
+            listener.onFeedbackShared(FeedbackSharedEvent.of(
                     5L, 10L, false, true, "BEHAVIOR"));
 
             verify(notificationService).createAll(

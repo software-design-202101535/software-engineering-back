@@ -255,7 +255,7 @@ class GradeOperationFacadeTest {
         }
 
         @Test
-        @DisplayName("TC-3-2. 처리 결과 N건 → GradeBatchProcessedEvent(studentId, N) publish 1회")
+        @DisplayName("TC-3-2. 처리 결과 존재 → GradeBatchProcessedEvent(studentId) publish 1회")
         void publishesEventWithCount() {
             UserDetailsImpl teacher = UserDetailsImpl.create(10L, Role.TEACHER);
             when(studentService.getById(2L)).thenReturn(student);
@@ -271,10 +271,7 @@ class GradeOperationFacadeTest {
             ArgumentCaptor<GradeBatchProcessedEvent> captor =
                     ArgumentCaptor.forClass(GradeBatchProcessedEvent.class);
             verify(eventPublisher).publishEvent(captor.capture());
-            assertAll(
-                    () -> assertEquals(2L, captor.getValue().getStudentId()),
-                    () -> assertEquals(3, captor.getValue().getCount())
-            );
+            assertEquals(2L, captor.getValue().getStudentId());
         }
 
         private Grade stubGradeForResponse() {

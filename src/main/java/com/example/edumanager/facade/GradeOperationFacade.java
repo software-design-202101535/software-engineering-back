@@ -47,7 +47,7 @@ public class GradeOperationFacade {
         checkHomeroomAccess(userDetails.getUserId(), student);
         List<Grade> grades = gradeService.batchProcess(student, request);
         if (!grades.isEmpty()) {
-            eventPublisher.publishEvent(GradeBatchProcessedEvent.of(studentId, grades.size()));
+            eventPublisher.publishEvent(GradeBatchProcessedEvent.of(studentId));
         }
         return grades.stream().map(GradeResponse::of).toList();
     }

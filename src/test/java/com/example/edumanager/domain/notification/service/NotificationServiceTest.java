@@ -43,17 +43,17 @@ class NotificationServiceTest {
     class FindByUserId {
 
         @Test
-        @DisplayName("TC-1-1. 성공 → repository.findByUserIdOrderByCreatedAtDesc 위임, 결과 반환")
+        @DisplayName("TC-1-1. 성공 → repository.findByUserIdOrderByCreatedAtDescIdDesc 위임, 결과 반환")
         void success() {
             Notification n1 = mock(Notification.class);
             Notification n2 = mock(Notification.class);
-            when(notificationRepository.findByUserIdOrderByCreatedAtDesc(1L))
+            when(notificationRepository.findByUserIdOrderByCreatedAtDescIdDesc(1L))
                     .thenReturn(List.of(n1, n2));
 
             List<Notification> result = notificationService.findByUserId(1L);
 
             assertAll(
-                    () -> verify(notificationRepository).findByUserIdOrderByCreatedAtDesc(1L),
+                    () -> verify(notificationRepository).findByUserIdOrderByCreatedAtDescIdDesc(1L),
                     () -> assertEquals(List.of(n1, n2), result)
             );
         }

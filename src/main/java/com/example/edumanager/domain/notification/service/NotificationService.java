@@ -19,7 +19,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
 
     public List<Notification> findByUserId(Long userId) {
-        return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        return notificationRepository.findByUserIdOrderByCreatedAtDescIdDesc(userId);
     }
 
     public void markAsRead(Long notificationId, Long userId) {
