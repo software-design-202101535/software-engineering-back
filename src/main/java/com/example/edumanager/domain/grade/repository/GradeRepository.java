@@ -22,4 +22,7 @@ public interface GradeRepository extends JpaRepository<Grade, Long> {
                                        @Param("examType") ExamType examType, @Param("subjects") List<Subject> subjects);
 
     List<Grade> findAllByStudentAndSemesterAndExamType(StudentProfile student, String semester, ExamType examType);
+
+    @Query("SELECT g FROM Grade g JOIN FETCH g.student WHERE g.score IS NOT NULL")
+    List<Grade> findAllWithStudentAndScoreNotNull();
 }
