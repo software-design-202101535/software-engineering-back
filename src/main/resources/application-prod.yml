@@ -35,6 +35,9 @@ jwt:
   access-token-expiry: 1800000
   refresh-token-expiry: 604800000
 
+encryption:
+  key: ${ENCRYPTION_KEY}
+
 fcm:
   enabled: ${FCM_ENABLED:false}
   credentials-path: ${FCM_CREDENTIALS_PATH:}
