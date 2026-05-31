@@ -2,6 +2,8 @@ package com.example.edumanager.domain.student.entity;
 
 import com.example.edumanager.domain.user.entity.School;
 import com.example.edumanager.domain.user.entity.User;
+import com.example.edumanager.global.crypto.EncryptedLocalDateConverter;
+import com.example.edumanager.global.crypto.EncryptedStringConverter;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -36,16 +38,20 @@ public class StudentProfile {
     @Column(nullable = false)
     private int number;
 
-    @Column(name = "birth_date")
+    @Convert(converter = EncryptedLocalDateConverter.class)
+    @Column(name = "birth_date", length = 100)
     private LocalDate birthDate;
 
-    @Column(length = 20)
+    @Convert(converter = EncryptedStringConverter.class)
+    @Column(length = 255)
     private String phone;
 
-    @Column(name = "parent_phone", length = 20)
+    @Convert(converter = EncryptedStringConverter.class)
+    @Column(name = "parent_phone", length = 255)
     private String parentPhone;
 
-    @Column(length = 255)
+    @Convert(converter = EncryptedStringConverter.class)
+    @Column(columnDefinition = "TEXT")
     private String address;
 
     public static StudentProfile of(User user, School school, int grade, int classNum, int number) {

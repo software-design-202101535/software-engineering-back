@@ -1,6 +1,7 @@
 package com.example.edumanager.domain.student.entity;
 
 import com.example.edumanager.domain.teacher.entity.TeacherProfile;
+import com.example.edumanager.global.crypto.EncryptedStringConverter;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -31,6 +32,7 @@ public class StudentNote {
     @Column(nullable = false, length = 20)
     private NoteCategory category;
 
+    @Convert(converter = EncryptedStringConverter.class)
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 

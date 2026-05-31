@@ -2,6 +2,7 @@ package com.example.edumanager.domain.feedback.entity;
 
 import com.example.edumanager.domain.student.entity.StudentProfile;
 import com.example.edumanager.domain.teacher.entity.TeacherProfile;
+import com.example.edumanager.global.crypto.EncryptedStringConverter;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -39,6 +40,7 @@ public class Feedback {
     @Column(name = "feedback_date", nullable = false)
     private LocalDate date;
 
+    @Convert(converter = EncryptedStringConverter.class)
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 

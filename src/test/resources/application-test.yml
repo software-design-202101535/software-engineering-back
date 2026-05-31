@@ -24,3 +24,6 @@ jwt:
   secret: test-secret-key-must-be-at-least-256-bits-long-1234567890
   access-token-expiry: 1800000
   refresh-token-expiry: 604800000
+
+encryption:
+  key: HIQxrNaQfjBvPe5V27BDw5Jm8xdlNMldTfAIHE9k5P0=   # test 전용 Base64 256-bit 키
