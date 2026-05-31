@@ -23,6 +23,10 @@ public class GradeService {
         return gradeRepository.findAllByStudentAndSemesterAndExamType(student, semester, examType);
     }
 
+    public List<Grade> getAllForAnalytics() {
+        return gradeRepository.findAllWithStudentAndScoreNotNull();
+    }
+
     public List<Grade> batchProcess(StudentProfile student, BatchGradeRequest request) {
         List<Grade> toUpdate = findGradesByIds(request.getUpdate().stream().map(BatchGradeRequest.UpdateItem::getId).toList());
         List<Grade> toDelete = findGradesByIds(request.getDelete());
