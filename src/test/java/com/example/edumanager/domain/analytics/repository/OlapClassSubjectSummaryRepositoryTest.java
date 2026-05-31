@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -65,6 +66,39 @@ class OlapClassSubjectSummaryRepositoryTest extends AbstractRepositoryIntegratio
         assertThat(found.getStudentCount()).isEqualTo(28);
         assertThat(found.getDistribution().getA()).isEqualTo(3);
         assertThat(found.getDistribution().getF()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("TC-4. findForDashboard — classNum·subject 지정 시 해당 반/과목만 (학년전체/다른반/다른과목/다른학교 노이즈 제외)")
+    void findForDashboardByClassAndSubject() {
+        repository.save(classRow(School.SUNRIN_HIGH_SCHOOL, 3, null, "2025-1", Subject.MATH));     // 학년전체 → 제외
+        repository.save(classRow(School.SUNRIN_HIGH_SCHOOL, 3, 2, "2025-1", Subject.MATH));        // 매칭
+        repository.save(classRow(School.SUNRIN_HIGH_SCHOOL, 3, 1, "2025-1", Subject.MATH));        // 다른 반 → 제외
+        repository.save(classRow(School.SUNRIN_HIGH_SCHOOL, 3, 2, "2025-1", Subject.ENGLISH));     // 다른 과목 → 제외
+        repository.saveAndFlush(classRow(School.BUSAN_HIGH_SCHOOL, 3, 2, "2025-1", Subject.MATH));  // 다른 학교 → 제외
+
+        List<OlapClassSubjectSummary> result = repository.findForDashboard(
+                School.SUNRIN_HIGH_SCHOOL, 3, 2, "2025-1", Subject.MATH);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getClassNum()).isEqualTo(2);
+        assertThat(result.get(0).getSubject()).isEqualTo(Subject.MATH);
+    }
+
+    @Test
+    @DisplayName("TC-5. findForDashboard — classNum=null이면 학년전체 행만, subject=null이면 전 과목 반환")
+    void findForDashboardGradeWideAllSubjects() {
+        repository.save(classRow(School.SUNRIN_HIGH_SCHOOL, 3, null, "2025-1", Subject.MATH));        // 학년전체 매칭
+        repository.save(classRow(School.SUNRIN_HIGH_SCHOOL, 3, null, "2025-1", Subject.ENGLISH));     // 학년전체 매칭
+        repository.save(classRow(School.SUNRIN_HIGH_SCHOOL, 3, 2, "2025-1", Subject.MATH));           // 반별 → 제외
+        repository.saveAndFlush(classRow(School.SUNRIN_HIGH_SCHOOL, 3, null, "2025-2", Subject.MATH)); // 다른 학기 → 제외
+
+        List<OlapClassSubjectSummary> result = repository.findForDashboard(
+                School.SUNRIN_HIGH_SCHOOL, 3, null, "2025-1", null);
+
+        assertThat(result).extracting(OlapClassSubjectSummary::getSubject)
+                .containsExactlyInAnyOrder(Subject.MATH, Subject.ENGLISH);
+        assertThat(result).allMatch(OlapClassSubjectSummary::isGradeWide);
     }
 
     private OlapClassSubjectSummary classRow(School school, int grade, Integer classNum, String semester, Subject subject) {

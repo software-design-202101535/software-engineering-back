@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -59,6 +60,20 @@ class OlapStudentRankRepositoryTest extends AbstractRepositoryIntegrationTest {
         assertThat(found.getTotalCount()).isEqualTo(210);
         assertThat(found.getPercentile()).isEqualTo(94.3);
         assertThat(found.getAvgScore()).isEqualTo(88.0);
+    }
+
+    @Test
+    @DisplayName("TC-4. findByStudentIdAndSemester — 해당 학생/학기 행만 (다른 학생/학기 제외)")
+    void findByStudentIdAndSemester() {
+        repository.save(rank(1L, "2025-1", Subject.MATH.name(), AnalyticsScope.CLASS));
+        repository.save(rank(1L, "2025-1", OlapStudentRank.OVERALL, AnalyticsScope.GRADE));
+        repository.save(rank(1L, "2025-2", Subject.MATH.name(), AnalyticsScope.CLASS));        // 다른 학기 → 제외
+        repository.saveAndFlush(rank(2L, "2025-1", Subject.MATH.name(), AnalyticsScope.CLASS)); // 다른 학생 → 제외
+
+        List<OlapStudentRank> result = repository.findByStudentIdAndSemester(1L, "2025-1");
+
+        assertThat(result).hasSize(2)
+                .allMatch(r -> r.getStudentId().equals(1L) && r.getSemester().equals("2025-1"));
     }
 
     private OlapStudentRank rank(Long studentId, String semester, String subject, AnalyticsScope scope) {
