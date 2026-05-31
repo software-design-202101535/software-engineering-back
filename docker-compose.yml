@@ -22,6 +22,28 @@ services:
       timeout: 5s
       retries: 5
 
+  db-backup:
+    image: databack/mysql-backup:1.4.0
+    container_name: edumanager-db-backup
+    restart: unless-stopped
+    environment:
+      DB_SERVER: mysql
+      DB_PORT: "3306"
+      DB_USER: ${DB_USERNAME}
+      DB_PASS: ${DB_PASSWORD}
+      DB_DUMP_INCLUDE: ${DB_NAME}
+      DB_DUMP_TARGET: s3://edumanager-db-backup-970547352823-ap-northeast-2-an/edumanager
+      DB_DUMP_SAFECHARS: "true"          # 파일명에서 ':' 제거
+      CRON_SCHEDULE: "0 19 * * *"        # 19:00 UTC = 04:00 KST (매일 1회)
+      AWS_REGION: ap-northeast-2
+      # AWS 자격증명은 EC2 instance role(IMDS)로 자동 획득 → 키 env 미설정.
+      # IMDSv2 hop limit=2 필요(아래 deploy/RESTORE.md 참고). 안 되면 IAM 사용자 키로 폴백.
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - edumanager-network
+
   app:
     image: ${DOCKER_USERNAME}/edumanager:latest
     container_name: edumanager-app
