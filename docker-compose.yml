@@ -19,6 +19,9 @@ services:
       - --collation-server=utf8mb4_unicode_ci
       - --innodb-buffer-pool-size=256M     # 데이터 캐시. mem_limit(700m) 안에 들어가게 고정
       - --max-connections=100              # 기본 151 → 축소. HikariCP 풀(앱 1대)보다 충분히 큼
+      - --slow-query-log=ON                # 슬로우 쿼리 로깅 ON
+      - --long-query-time=0.1              # 0.1초 초과 쿼리 기록 (부하테스트용)
+      - --log-output=TABLE                 # mysql.slow_log 내장 테이블에 적재 → SQL로 조회
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
