@@ -9,7 +9,7 @@ const TEACHER_COUNT = 10;
 const STUDENT_COUNT = 100;
 const PARENT_COUNT = 50;
 const STUDENTS_PER_TEACHER = 10;
-const SUBJECTS = ['KOREAN', 'MATH', 'ENGLISH', 'SCIENCE', 'SOCIAL'];
+const COUNSELING_YEAR = 2025;
 
 export const options = {
     setupTimeout: '10m',
@@ -54,13 +54,24 @@ export const options = {
             ],
             exec: 'teacherUpdateGrade',
         },
+        shared_counseling_read: {
+            executor: 'ramping-vus',
+            startVUs: 0,
+            stages: [
+                { duration: '30s', target: 10 },
+                { duration: '2m',  target: 30 },
+                { duration: '30s', target: 0 },
+            ],
+            exec: 'teacherReadSharedCounseling',
+        },
     },
     thresholds: {
         'http_req_failed': ['rate<0.05'],
-        'http_req_duration{api:teacher_read_grades}':   ['p(95)<1500'],
-        'http_req_duration{api:student_read_grades}':   ['p(95)<1500'],
-        'http_req_duration{api:parent_read_grades}':    ['p(95)<1500'],
-        'http_req_duration{api:teacher_update_grade}':  ['p(95)<2000'],
+        'http_req_duration{api:teacher_read_grades}':       ['p(95)<1500'],
+        'http_req_duration{api:student_read_grades}':       ['p(95)<1500'],
+        'http_req_duration{api:parent_read_grades}':        ['p(95)<1500'],
+        'http_req_duration{api:teacher_update_grade}':      ['p(95)<2000'],
+        'http_req_duration{api:shared_counseling_read}':    ['p(95)<2000'],
     },
 };
 
@@ -157,6 +168,23 @@ export function parentReadGrades(data) {
         `${BASE}/api/students/${childId}/grades?semester=${SEMESTER}&examType=${randomExam()}`,
         { headers: jsonHeaders(parent.token), tags: { api: 'parent_read_grades' } });
     check(res, { 'parent_read 200': r => r.status === 200 });
+    sleep(Math.random());
+}
+
+// 공유상담 조회. 같은 학교(SUNRIN) 다른 교사가 공유한 상담을 본다.
+// 쿼리가 YEAR(date)/MONTH(date)/name LIKE '%..%' 로 인덱스를 못 타는 경로 → 슬로우쿼리 측정 대상.
+export function teacherReadSharedCounseling(data) {
+    const teacherIdx = (__VU % TEACHER_COUNT);
+    let url = `${BASE}/api/counselings/shared?year=${COUNSELING_YEAR}`;
+    const r = Math.random();
+    if (r < 0.25) url += `&month=${1 + Math.floor(Math.random() * 12)}`;
+    else if (r < 0.5) url += `&grade=${1 + Math.floor(Math.random() * 3)}`;
+    else if (r < 0.7) url += `&name=student`;   // 선두 와일드카드 LIKE → 풀스캔 유발
+    const res = http.get(url, {
+        headers: jsonHeaders(data.teacherTokens[teacherIdx]),
+        tags: { api: 'shared_counseling_read' },
+    });
+    check(res, { 'shared_counseling 200': r => r.status === 200 });
     sleep(Math.random());
 }
 

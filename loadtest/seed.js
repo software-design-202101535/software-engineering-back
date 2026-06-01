@@ -7,6 +7,24 @@ const SCHOOL = 'SUNRIN_HIGH_SCHOOL';
 const SEMESTER = '2025-1';
 const SUBJECTS = ['KOREAN', 'MATH', 'ENGLISH', 'SCIENCE', 'SOCIAL'];
 
+// ── 볼륨 시드 (ETL/OLAP·인덱스 측정용 대량 데이터, load.js 와 별개 학교) ──
+// 기본 3학년 × 7반 × 30명 = 630명, × 4학기 × 2시험 × 10과목 ≈ 50,400 grade rows
+// 작게 돌려보려면: k6 run -e VCLASSES=1 -e VSTUDENTS=5 seed.js
+const VOLUME_SCHOOL = 'SEOUL_HIGH_SCHOOL';
+const VOLUME_GRADES = [1, 2, 3];
+const VOLUME_CLASSES_PER_GRADE = Number(__ENV.VCLASSES || 7);
+const VOLUME_STUDENTS_PER_CLASS = Number(__ENV.VSTUDENTS || 30);
+const VOLUME_SEMESTERS = ['2024-1', '2024-2', '2025-1', '2025-2'];
+const VOLUME_SUBJECTS = ['KOREAN', 'MATH', 'ENGLISH', 'SCIENCE', 'SOCIAL',
+                         'HISTORY', 'PHYSICS', 'CHEMISTRY', 'BIOLOGY', 'ETHICS'];
+
+// ── 상담 시드 (공유상담 검증 + 슬로우쿼리 측정용, Part 1 SUNRIN 100명 대상) ──
+const COUNSELING_PER_STUDENT = Number(__ENV.CPERSTUDENT || 8);
+const COUNSELING_SHARED_OUT_OF_10 = 6;   // 10건 중 6건 공유 ≈ 60%
+
+function rnd(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function pad(n) { return n < 10 ? `0${n}` : `${n}`; }
+
 export const options = {
     vus: 1,
     iterations: 1,
@@ -95,6 +113,83 @@ function seedGrades(teacherToken, studentId) {
     }
 }
 
+// 볼륨 데이터: 별도 학교(SEOUL)에 대량 학생·다학기 성적 생성. ETL/OLAP·인덱스 측정용.
+// 성적 쓰기는 담임(grade·classNum·school 일치)만 가능 → 반별 담임 교사를 짝지어 생성한다.
+function seedVolume() {
+    console.log('=== volume: teachers ===');
+    const classTeacherToken = {};   // `${grade}-${classNum}` → token
+    let tIdx = 0;
+    for (const g of VOLUME_GRADES) {
+        for (let c = 1; c <= VOLUME_CLASSES_PER_GRADE; c++) {
+            tIdx++;
+            const email = `vteacher${tIdx}@gmail.com`;
+            post('/api/auth/register/teacher', {
+                email, password: PASSWORD, passwordConfirm: PASSWORD,
+                name: `vteacher${tIdx}`, school: VOLUME_SCHOOL, grade: g, classNum: c,
+                termsAgreed: true, privacyAgreed: true,
+            });
+            classTeacherToken[`${g}-${c}`] = login(email).accessToken;
+        }
+    }
+
+    console.log('=== volume: students + grades ===');
+    let sNum = 0;
+    let rows = 0;
+    for (const g of VOLUME_GRADES) {
+        for (let c = 1; c <= VOLUME_CLASSES_PER_GRADE; c++) {
+            const tToken = classTeacherToken[`${g}-${c}`];
+            for (let n = 1; n <= VOLUME_STUDENTS_PER_CLASS; n++) {
+                sNum++;
+                const email = `vstudent${sNum}@gmail.com`;
+                post('/api/auth/register/student', {
+                    email, password: PASSWORD, passwordConfirm: PASSWORD,
+                    name: `vstudent${sNum}`, school: VOLUME_SCHOOL, grade: g, classNum: c, number: n,
+                    termsAgreed: true, privacyAgreed: true,
+                });
+                const studentId = login(email).studentId;
+                for (const semester of VOLUME_SEMESTERS) {
+                    for (const examType of ['MIDTERM', 'FINAL']) {
+                        const create = VOLUME_SUBJECTS.map(subj => ({ subject: subj, score: rnd(60, 100) }));
+                        const res = put(`/api/students/${studentId}/grades/batch`,
+                            { semester, examType, create, update: [], delete: [] }, tToken);
+                        check(res, { 'volume batch ok': r => r.status === 200 });
+                        rows += create.length;
+                    }
+                }
+            }
+            console.log(`volume class ${g}-${c} done (rows so far: ${rows})`);
+        }
+    }
+    console.log(`volume done: ${sNum} students, ${rows} grade rows`);
+}
+
+// 상담 데이터: Part 1 SUNRIN 100명 대상. 작성자는 10명 교사 라운드로빈, 약 60% 공유.
+// 공유상담 조회(/shared) 검증 + 슬로우쿼리(YEAR()/LIKE 비-sargable) 측정용.
+function seedCounselings(teacherTokens, students) {
+    console.log('=== counselings ===');
+    let count = 0;
+    for (let s = 0; s < students.length; s++) {
+        const studentId = students[s].studentId;
+        for (let k = 0; k < COUNSELING_PER_STUDENT; k++) {
+            const author = teacherTokens[(s + k) % teacherTokens.length];
+            const month = 1 + ((s + k) % 12);
+            const day = 1 + ((s * 3 + k) % 28);
+            const shared = ((s + k) % 10) < COUNSELING_SHARED_OUT_OF_10;
+            const res = post(`/api/students/${studentId}/counselings`, {
+                counselingDate: `2025-${pad(month)}-${pad(day)}`,
+                content: `상담내용 student${studentId} #${k}`,
+                nextPlan: '다음 상담 예정',
+                nextDate: `2025-${pad(month)}-28`,
+                sharedWithTeachers: shared,
+            }, author);
+            check(res, { 'counseling created': r => r.status === 201 });
+            count++;
+        }
+        if ((s + 1) % 20 === 0) console.log(`counselings ${s + 1}/${students.length}`);
+    }
+    console.log(`counselings done: ${count} (≈${Math.round(count * COUNSELING_SHARED_OUT_OF_10 / 10)} shared)`);
+}
+
 export default function () {
     console.log('=== teachers ===');
     const teacherTokens = [];
@@ -122,6 +217,9 @@ export default function () {
         seedGrades(teacherTokens[meta.teacherIdx - 1], students[i - 1].studentId);
         if (i % 20 === 0) console.log(`grades ${i}/100`);
     }
+
+    seedCounselings(teacherTokens, students);   // 공유상담 검증·슬로우쿼리용 (SUNRIN 100명)
+    seedVolume();                               // ETL/OLAP·인덱스 측정용 대량 데이터 (SEOUL)
 
     console.log('=== seed done ===');
 }
