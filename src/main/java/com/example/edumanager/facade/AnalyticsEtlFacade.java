@@ -11,7 +11,11 @@ import com.example.edumanager.domain.grade.entity.GradeLevel;
 import com.example.edumanager.domain.grade.entity.Subject;
 import com.example.edumanager.domain.grade.service.GradeService;
 import com.example.edumanager.domain.student.entity.StudentProfile;
+import com.example.edumanager.domain.user.entity.Role;
 import com.example.edumanager.domain.user.entity.School;
+import com.example.edumanager.global.exception.CustomException;
+import com.example.edumanager.global.exception.ErrorCode;
+import com.example.edumanager.global.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +46,15 @@ public class AnalyticsEtlFacade {
     private final GradeService gradeService;
     private final OlapClassSubjectSummaryRepository classSummaryRepository;
     private final OlapStudentRankRepository studentRankRepository;
+
+    /** 수동 트리거(API)용. 교사만 허용하고, 인가 통과 시 스케줄러와 동일한 전체 재집계를 수행한다. */
+    @Transactional
+    public void rebuildByTeacher(UserDetailsImpl userDetails) {
+        if (userDetails.getRole() != Role.TEACHER) {
+            throw new CustomException(ErrorCode.JWT_ACCESS_DENIED);
+        }
+        rebuild(LocalDateTime.now());
+    }
 
     @Transactional
     public void rebuild(LocalDateTime aggregatedAt) {
