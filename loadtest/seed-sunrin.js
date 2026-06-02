@@ -1,29 +1,19 @@
-import http from 'k6/http';
-import { check, fail } from 'k6';
+import { check } from 'k6';
+import { PASSWORD, pad, post, put, get, login } from './seed-common.js';
 
-const BASE = __ENV.BASE_URL || 'https://api.edumanager.uk';
-const PASSWORD = '1';
+// ── 기능/시연용 시드 (SUNRIN) ──
+// 교사 10 · 학생 100 · 학부모 50. 성적(2025-1) + 상담(공유 포함).
+// 부하용 대량 데이터는 seed-volume.js 로 분리.
 const SCHOOL = 'SUNRIN_HIGH_SCHOOL';
 const SEMESTER = '2025-1';
 const SUBJECTS = ['KOREAN', 'MATH', 'ENGLISH', 'SCIENCE', 'SOCIAL'];
 
-// ── 볼륨 시드 (ETL/OLAP·인덱스 측정용 대량 데이터, load.js 와 별개 학교) ──
-// 기본 3학년 × 7반 × 30명 = 630명, × 4학기 × 2시험 × 10과목 ≈ 50,400 grade rows
-// 작게 돌려보려면: k6 run -e VCLASSES=1 -e VSTUDENTS=5 seed.js
-const VOLUME_SCHOOL = 'SEOUL_HIGH_SCHOOL';
-const VOLUME_GRADES = [1, 2, 3];
-const VOLUME_CLASSES_PER_GRADE = Number(__ENV.VCLASSES || 7);
-const VOLUME_STUDENTS_PER_CLASS = Number(__ENV.VSTUDENTS || 30);
-const VOLUME_SEMESTERS = ['2024-1', '2024-2', '2025-1', '2025-2'];
-const VOLUME_SUBJECTS = ['KOREAN', 'MATH', 'ENGLISH', 'SCIENCE', 'SOCIAL',
-                         'HISTORY', 'PHYSICS', 'CHEMISTRY', 'BIOLOGY', 'ETHICS'];
+// ── 피드백 시드 (학생/학부모 공개여부 섞어 시연용 데이터 확보) ──
+const FEEDBACK_CATEGORIES = ['GRADE', 'BEHAVIOR', 'ATTENDANCE', 'ATTITUDE', 'OTHER'];
 
-// ── 상담 시드 (공유상담 검증 + 슬로우쿼리 측정용, Part 1 SUNRIN 100명 대상) ──
+// ── 상담 시드 (공유상담 검증 + 슬로우쿼리 측정용, SUNRIN 100명 대상) ──
 const COUNSELING_PER_STUDENT = Number(__ENV.CPERSTUDENT || 8);
 const COUNSELING_SHARED_OUT_OF_10 = 6;   // 10건 중 6건 공유 ≈ 60%
-
-function rnd(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
-function pad(n) { return n < 10 ? `0${n}` : `${n}`; }
 
 export const options = {
     vus: 1,
@@ -31,30 +21,6 @@ export const options = {
     setupTimeout: '10m',
     teardownTimeout: '10m',
 };
-
-function jsonHeaders(token) {
-    const h = { 'Content-Type': 'application/json' };
-    if (token) h.Authorization = `Bearer ${token}`;
-    return h;
-}
-
-function post(path, body, token) {
-    return http.post(`${BASE}${path}`, JSON.stringify(body), { headers: jsonHeaders(token) });
-}
-
-function put(path, body, token) {
-    return http.put(`${BASE}${path}`, JSON.stringify(body), { headers: jsonHeaders(token) });
-}
-
-function get(path, token) {
-    return http.get(`${BASE}${path}`, { headers: jsonHeaders(token) });
-}
-
-function login(email) {
-    const res = post('/api/auth/login/email', { email, password: PASSWORD });
-    if (res.status !== 200) fail(`login failed: ${email} status=${res.status} body=${res.body}`);
-    return res.json();
-}
 
 function teacherClass(i) {
     const idx = i - 1;
@@ -113,54 +79,33 @@ function seedGrades(teacherToken, studentId) {
     }
 }
 
-// 볼륨 데이터: 별도 학교(SEOUL)에 대량 학생·다학기 성적 생성. ETL/OLAP·인덱스 측정용.
-// 성적 쓰기는 담임(grade·classNum·school 일치)만 가능 → 반별 담임 교사를 짝지어 생성한다.
-function seedVolume() {
-    console.log('=== volume: teachers ===');
-    const classTeacherToken = {};   // `${grade}-${classNum}` → token
-    let tIdx = 0;
-    for (const g of VOLUME_GRADES) {
-        for (let c = 1; c <= VOLUME_CLASSES_PER_GRADE; c++) {
-            tIdx++;
-            const email = `vteacher${tIdx}@gmail.com`;
-            post('/api/auth/register/teacher', {
-                email, password: PASSWORD, passwordConfirm: PASSWORD,
-                name: `vteacher${tIdx}`, school: VOLUME_SCHOOL, grade: g, classNum: c,
-                termsAgreed: true, privacyAgreed: true,
-            });
-            classTeacherToken[`${g}-${c}`] = login(email).accessToken;
+// 피드백 데이터: 학생당 5카테고리 각 1건. 담임이 작성하고, 학생/학부모 공개여부를 섞는다.
+// 공개로 만든 건은 생성 시점에 공유 알림(FeedbackSharedEvent)도 함께 발생한다.
+function seedFeedbacks(teacherTokens, students) {
+    console.log('=== feedbacks ===');
+    let count = 0;
+    for (let s = 0; s < students.length; s++) {
+        const studentId = students[s].studentId;
+        const teacherToken = teacherTokens[studentMeta(s + 1).teacherIdx - 1];
+        for (let c = 0; c < FEEDBACK_CATEGORIES.length; c++) {
+            const category = FEEDBACK_CATEGORIES[c];
+            const month = 3 + (c % 6);                   // 3~8월에 분산
+            const day = 1 + ((s + c) % 28);
+            const studentVisible = ((s + c) % 5) < 3;    // ≈60% 학생 공개
+            const parentVisible = ((s + c) % 2) === 0;   // ≈50% 학부모 공개
+            const res = post(`/api/students/${studentId}/feedbacks`, {
+                category,
+                date: `2025-${pad(month)}-${pad(day)}`,
+                content: `${category} 관련 피드백 (student${studentId})`,
+                studentVisible,
+                parentVisible,
+            }, teacherToken);
+            check(res, { 'feedback created': r => r.status === 201 });
+            count++;
         }
+        if ((s + 1) % 20 === 0) console.log(`feedbacks ${s + 1}/${students.length}`);
     }
-
-    console.log('=== volume: students + grades ===');
-    let sNum = 0;
-    let rows = 0;
-    for (const g of VOLUME_GRADES) {
-        for (let c = 1; c <= VOLUME_CLASSES_PER_GRADE; c++) {
-            const tToken = classTeacherToken[`${g}-${c}`];
-            for (let n = 1; n <= VOLUME_STUDENTS_PER_CLASS; n++) {
-                sNum++;
-                const email = `vstudent${sNum}@gmail.com`;
-                post('/api/auth/register/student', {
-                    email, password: PASSWORD, passwordConfirm: PASSWORD,
-                    name: `vstudent${sNum}`, school: VOLUME_SCHOOL, grade: g, classNum: c, number: n,
-                    termsAgreed: true, privacyAgreed: true,
-                });
-                const studentId = login(email).studentId;
-                for (const semester of VOLUME_SEMESTERS) {
-                    for (const examType of ['MIDTERM', 'FINAL']) {
-                        const create = VOLUME_SUBJECTS.map(subj => ({ subject: subj, score: rnd(60, 100) }));
-                        const res = put(`/api/students/${studentId}/grades/batch`,
-                            { semester, examType, create, update: [], delete: [] }, tToken);
-                        check(res, { 'volume batch ok': r => r.status === 200 });
-                        rows += create.length;
-                    }
-                }
-            }
-            console.log(`volume class ${g}-${c} done (rows so far: ${rows})`);
-        }
-    }
-    console.log(`volume done: ${sNum} students, ${rows} grade rows`);
+    console.log(`feedbacks done: ${count}`);
 }
 
 // 상담 데이터: Part 1 SUNRIN 100명 대상. 작성자는 10명 교사 라운드로빈, 약 60% 공유.
@@ -218,8 +163,8 @@ export default function () {
         if (i % 20 === 0) console.log(`grades ${i}/100`);
     }
 
-    seedCounselings(teacherTokens, students);   // 공유상담 검증·슬로우쿼리용 (SUNRIN 100명)
-    seedVolume();                               // ETL/OLAP·인덱스 측정용 대량 데이터 (SEOUL)
+    seedFeedbacks(teacherTokens, students);      // 피드백 (학생/학부모 공개 섞음)
+    seedCounselings(teacherTokens, students);    // 공유상담 검증·슬로우쿼리용 (SUNRIN 100명)
 
-    console.log('=== seed done ===');
+    console.log('=== seed-sunrin done ===');
 }
