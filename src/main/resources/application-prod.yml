@@ -13,6 +13,14 @@ management:
   metrics:
     tags:
       application: edumanager
+    distribution:
+      percentiles-histogram:
+        "[http.server.requests]": true     # _bucket 생성 → p50/p95/p99 백분위 패널 활성
+
+server:
+  tomcat:
+    mbeanregistry:
+      enabled: true                         # tomcat_threads_busy/current 등 스레드 메트릭 export
 
 spring:
   datasource:
@@ -20,10 +28,12 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10     # 풀 비교 baseline (기본값과 동일하게 명시). 비교 시 20으로 변경
 
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
