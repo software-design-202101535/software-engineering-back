@@ -33,7 +33,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create     # ⚠️ 임시: 시연 데이터 재시드용 DB 초기화. 시드 후 반드시 update 로 되돌릴 것
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
