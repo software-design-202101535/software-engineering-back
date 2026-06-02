@@ -61,8 +61,9 @@ services:
       - "8080"
       - "9090"
     environment:
+      TZ: Asia/Seoul     # 컨테이너 기본 UTC → KST. LocalDateTime.now() 가 KST 벽시계로 찍히도록
       # 컨테이너 cgroup 한도(1500m) 기준 기본 heap은 25%(~375m)로 너무 작음 → 명시 캡
-      JAVA_TOOL_OPTIONS: "-Xms512m -Xmx1g"
+      JAVA_TOOL_OPTIONS: "-Xms512m -Xmx1g -Duser.timezone=Asia/Seoul"
       SPRING_PROFILES_ACTIVE: prod
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${DB_NAME}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
