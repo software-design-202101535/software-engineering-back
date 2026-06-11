@@ -165,6 +165,50 @@
         { "refId": "B", "expr": "tomcat_threads_current_threads{application=\"edumanager\"}", "legendFormat": "current" },
         { "refId": "C", "expr": "tomcat_threads_config_max_threads{application=\"edumanager\"}", "legendFormat": "max" }
       ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "title": "Container memory usage % (working set / limit)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
+      "id": 11,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 0.8 },
+              { "color": "red", "value": 0.95 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "showLegend": true, "calcs": ["lastNotNull", "max"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "container_memory_working_set_bytes{name=~\"edumanager-.+\"} / container_spec_memory_limit_bytes{name=~\"edumanager-.+\"}",
+          "legendFormat": "{{name}}"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "title": "Container memory working set (bytes)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
+      "id": 12,
+      "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "showLegend": true, "calcs": ["lastNotNull", "max"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [
+        { "refId": "A", "expr": "container_memory_working_set_bytes{name=~\"edumanager-.+\"}", "legendFormat": "{{name}}" },
+        { "refId": "B", "expr": "container_spec_memory_limit_bytes{name=~\"edumanager-.+\"}", "legendFormat": "{{name}} limit" }
+      ]
     }
   ],
   "refresh": "5s",
@@ -175,6 +219,6 @@
   "timezone": "",
   "title": "EduManager Golden Signals",
   "uid": "edumanager-golden",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }
